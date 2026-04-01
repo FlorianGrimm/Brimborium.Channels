@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="Brimborium.Channels.Sample/Brimborium.Channels.Sample.csproj" Id="a2042c1d-1d76-43a2-9f83-61f10efa7cec" />
-  <Project Path="Brimborium.Channels.Test/Brimborium.Channels.Test.csproj" Id="2d40775a-b12a-45e4-b799-fc035cff22e8" />
-  <Project Path="Brimborium.Channels/Brimborium.Channels.csproj" Id="855e000e-a40d-4eb9-a92b-e8ca781665b2" />
+  <Project Path="Brimborium.Channels.Sample/Brimborium.Channels.Sample.csproj" />
+  <Project Path="Brimborium.Channels.Test/Brimborium.Channels.Test.csproj" />
+  <Project Path="Brimborium.Channels/Brimborium.Channels.csproj" />
 </Solution>
