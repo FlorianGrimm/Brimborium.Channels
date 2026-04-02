@@ -2,13 +2,17 @@
 
 namespace Brimborium.Channels;
 
+/// <summary>
+/// TODO - change this to ILogger
+/// </summary>
 public class BCMonitor {
     public BCMonitor() {
     }
 
     public void AddMonitored(IBCMonitored monitored) {
-        monitored.SetMonitor(this);
-        this.Log(monitored, "Add", "");
+        if (monitored.SetMonitor(this)) { 
+            this.Log(monitored, "Monitor", "Add");
+        }
     }
 
     public BCMonitorLogScope LogEnter(IBCPart part, string name) {
@@ -23,14 +27,18 @@ public class BCMonitor {
     public void Log(IBCPart part, string name, string kind) {
         System.Console.WriteLine($"{part.GetType().Name}.{name}:{kind}");
     }
+
+    internal void LogAwait(IBCPart part, string name) {
+        System.Console.WriteLine($"{part.GetType().Name}.{name}:await");
+    }
 }
 
 public sealed record LogItem(IBCMonitored Part, string Name, string Kind);
 
-public record struct BCMonitorLogScope(BCMonitor Monitor, IBCPart part, string Name)
+public record struct BCMonitorLogScope(BCMonitor Monitor, IBCPart Part, string Name)
     : IDisposable {
     public void Dispose() {
-        Monitor.Log(part, Name, "End");
+        this.Monitor.Log(this.Part, this.Name, "End");
     }
 }
 public static class BCMonitorExtension {
@@ -38,6 +46,8 @@ public static class BCMonitorExtension {
         public BCMonitor Add(IBCPart part) {
             if (part is IBCMonitored monitored) {
                 thatMonitor.AddMonitored(monitored);
+            } else {
+                System.Console.WriteLine($"{part.GetType().FullName} is not IBCMonitored");
             }
             return thatMonitor;
         }

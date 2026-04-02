@@ -58,10 +58,11 @@ public abstract class BCProcessorSynced<TIn, TOut>
     }
 
     BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-    public void SetMonitor(BCMonitor monitor) {
-        if (this._Monitor is { }) { return; }
+    public virtual bool SetMonitor(BCMonitor monitor) {
+        if (this._Monitor is { }) { return false; }
         this._Monitor = monitor;
         monitor.Add(this.NextConsumer);
+        return true;
     }
 }
 
@@ -71,7 +72,7 @@ public abstract class BCProcessorSyncedO2<TIn, TOut1, TOut2>
     : IBCConsumer<TIn>
     , IBCMonitored{
     private BCLifeTime _LifeTime;
-    private BCMonitor? _Monitor;
+    protected BCMonitor? _Monitor;
     protected readonly IBCConsumer<TOut1> NextConsumer1;
     protected readonly IBCConsumer<TOut2> NextConsumer2;
     protected readonly SemaphoreSlim _Semaphore = new(1, 1);
@@ -129,10 +130,11 @@ public abstract class BCProcessorSyncedO2<TIn, TOut1, TOut2>
     }
 
     BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-    public virtual void SetMonitor(BCMonitor monitor) {
-        if (this._Monitor is { }) { return; }
+    public virtual bool SetMonitor(BCMonitor monitor) {
+        if (this._Monitor is { }) { return false; }
         this._Monitor = monitor;
         monitor.Add(this.NextConsumer1);
         monitor.Add(this.NextConsumer2);
+        return true;
     }
 }

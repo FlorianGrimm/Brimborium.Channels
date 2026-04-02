@@ -18,4 +18,17 @@ public class BCSourceTests {
         var actual = await sink.GetResultAsync(cancellationToken);
         await Assert.That(actual).IsEquivalentTo(listExpected);
     }
+
+    [Test]
+    public async Task BCSource_OnError_PropagatesError() {
+        var ct = CancellationToken.None;
+        BCConsumerListValue<int> sink = new(new("Sink"));
+        BCSource<int> source = new(new("source"), sink);
+
+        var error = new InvalidOperationException("pipeline error");
+        await source.OnError(new BCError(error), ct);
+        await source.OnComplete(ct);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sink.GetResultAsync(ct));
+    }
 }

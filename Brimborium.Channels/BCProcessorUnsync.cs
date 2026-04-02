@@ -1,12 +1,14 @@
 #pragma warning disable IDE1006 // Naming Styles
 
+using System.Numerics;
+
 namespace Brimborium.Channels;
 
 public abstract class BCProcessorUnsync<TIn, TOut>
     : IBCConsumer<TIn>
     , IBCMonitored {
     private BCLifeTime _LifeTime;
-    private BCMonitor? _Monitor;
+    protected BCMonitor? _Monitor;
     protected readonly IBCConsumer<TOut> NextConsumer;
 
     public BCLifeTime LifeTime => this._LifeTime;
@@ -18,10 +20,6 @@ public abstract class BCProcessorUnsync<TIn, TOut>
     ) {
         this.Description = description ?? new();
         this.NextConsumer = next;
-    }
-
-    public Task OnSubscripe(IBCConnection<TIn> connection, CancellationToken cancellationToken) {
-        throw new NotSupportedException();
     }
 
     public abstract Task OnNext(TIn value, CancellationToken cancellationToken);
@@ -50,10 +48,11 @@ public abstract class BCProcessorUnsync<TIn, TOut>
     }
 
     BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-    public virtual void SetMonitor(BCMonitor monitor) {
-        if (this._Monitor is { }) { return; }
+    public virtual bool SetMonitor(BCMonitor monitor) {
+        if (this._Monitor is { }) { return false; }
         this._Monitor = monitor;
         monitor.Add(this.NextConsumer);
+        return true;
     }
 }
 
@@ -112,10 +111,11 @@ public abstract class BCProcessorUnsyncO2<TIn, TOut1, TOut2>
     }
 
     BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-    public void SetMonitor(BCMonitor monitor) {
-        if (this._Monitor is { }) { return; }
+    public bool SetMonitor(BCMonitor monitor) {
+        if (this._Monitor is { }) { return false; }
         this._Monitor = monitor;
         monitor.Add(this.NextConsumer1);
         monitor.Add(this.NextConsumer2);
+        return true;
     }
 }

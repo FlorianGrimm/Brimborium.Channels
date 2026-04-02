@@ -2,6 +2,10 @@
 
 namespace Brimborium.Channels;
 
+/// <summary>
+/// TODO
+/// </summary>
+/// <typeparam name="T"></typeparam>
 public sealed class BCOutgoingProducer<T> 
     : IBCConsumer<T>, IBCProducer<T>
     , IBCMonitored {
@@ -105,11 +109,12 @@ public sealed class BCOutgoingProducer<T>
     }
 
     BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-    public void SetMonitor(BCMonitor monitor) {
-        if (this._Monitor is { }) { return; }
+    public bool SetMonitor(BCMonitor monitor) {
+        if (this._Monitor is { }) { return false; }
         this._Monitor = monitor;
         foreach (var consumer in this._ListOutgoingConnection) {
             monitor.Add(consumer);
         }
+        return true;
     }
 }

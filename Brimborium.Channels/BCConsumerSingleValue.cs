@@ -2,6 +2,10 @@
 
 namespace Brimborium.Channels;
 
+/// <summary>
+/// TODO
+/// </summary>
+/// <typeparam name="T">TODO</typeparam>
 public sealed class BCConsumerSingleValue<T> 
     : IBCConsumerSubscribable<T>
     , IBCMonitored {
@@ -13,16 +17,30 @@ public sealed class BCConsumerSingleValue<T>
     private Exception? _Error;
     private BCMonitor? _Monitor;
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public BCLifeTime LifeTime => this._LifeTime;
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public BCDescription Description { get; set; }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
+    /// <param name="description"></param>
     public BCConsumerSingleValue(
         BCDescription? description
     ) {
         this.Description = description ?? new();
     }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
+    /// <returns></returns>
     public Task<T?> GetResultAsync() {
         return this._Result.Task;
     }
@@ -66,8 +84,10 @@ public sealed class BCConsumerSingleValue<T>
     }
 
     BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-    public void SetMonitor(BCMonitor monitor) {
-        if (this._Monitor is { }) { return; }
+    public bool SetMonitor(BCMonitor monitor) {
+        if (this._Monitor is { }) { return false; }
         this._Monitor = monitor;
+        // no next consumer
+        return true;
     }
 }

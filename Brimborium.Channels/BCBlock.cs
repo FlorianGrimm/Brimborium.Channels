@@ -2,10 +2,14 @@
 
 namespace Brimborium.Channels;
 
-public class BCBlock : IBCBlock {
+/// <summary>
+/// TODO
+/// </summary>
+public class BCBlock : IBCBlock, IBCMonitored {
     private BCLifeTime _LifeTime;
     protected List<IBCConsumer> ListIncoming = new();
     protected List<IBCProducer> ListOutgoing = new();
+    private BCMonitor? _Monitor;
 
     protected BCBlock(
         BCDescription? description
@@ -34,16 +38,40 @@ public class BCBlock : IBCBlock {
         }
     }
 
-    internal void SetCompleting() {
-        BCLifeTimeExtension.SetCompleting(ref this._LifeTime);
+    internal bool SetCompleting() {
+        return BCLifeTimeExtension.SetCompleting(ref this._LifeTime);
     }
 
-    internal void SetCompleted() {
-        BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
+    internal bool SetCompleted() {
+        return BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
     }
+
+    BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
+    public virtual bool SetMonitor(BCMonitor monitor) {
+        if (this._Monitor is { }) { return false; }
+        this._Monitor = monitor;
+        foreach (var incoming in this.ListIncoming) { 
+            monitor.Add(incoming);
+        }
+        foreach (var outgoing in this.ListOutgoing) {
+            monitor.Add(outgoing);
+        }
+        return true;
+    }
+
+    protected void AddIncoming(IBCConsumer consumer) {
+        this._Monitor?.Add(consumer);
+    }
+    protected void AddOutgoing(IBCProducer producer) {
+        this._Monitor?.Add(producer);
+    }
+
 }
 
 
+/// <summary>
+/// TODO
+/// </summary>
 public class BCBlockI1O1<TIn1, TOut1> : BCBlock {
     public static BCBlockI1O1<TIn1, TOut1> Create(
         BCBlockI1O1Description? description,
@@ -65,8 +93,8 @@ public class BCBlockI1O1<TIn1, TOut1> : BCBlock {
     ) : base(
         description?.Description ?? new BCDescription(typeof(BCBlockI1O1<TIn1, TOut1>).FullName ?? string.Empty)
     ) {
-        this.ListIncoming.Add(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
-        this.ListOutgoing.Add(this.OutgoingProducer1 = outgoingProducer1);
+        this.AddIncoming(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
+        this.AddOutgoing(this.OutgoingProducer1 = outgoingProducer1);
     }
 }
 
@@ -102,9 +130,9 @@ public class BCBlockI2O1<TIn1, TIn2, TOut1> : BCBlock {
     ) : base(
         description?.Description ?? new BCDescription(typeof(BCBlockI1O1<TIn1, TOut1>).FullName ?? string.Empty)
     ) {
-        this.ListIncoming.Add(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
-        this.ListIncoming.Add(this.IncomingConsumer2 = new(description?.In2 ?? new("in2"), consumer2, this));
-        this.ListOutgoing.Add(this.OutgoingProducer1 = outgoingProducer1);
+        this.AddIncoming(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
+        this.AddIncoming(this.IncomingConsumer2 = new(description?.In2 ?? new("in2"), consumer2, this));
+        this.AddOutgoing(this.OutgoingProducer1 = outgoingProducer1);
     }
 }
 
@@ -144,10 +172,10 @@ public class BCBlockI3O1<TIn1, TIn2, TIn3, TOut1> : BCBlock {
     ) : base(
         description?.Description ?? new BCDescription(typeof(BCBlockI1O1<TIn1, TOut1>).FullName ?? string.Empty)
     ) {
-        this.ListIncoming.Add(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
-        this.ListIncoming.Add(this.IncomingConsumer2 = new(description?.In2 ?? new("in2"), consumer2, this));
-        this.ListIncoming.Add(this.IncomingConsumer3 = new(description?.In3 ?? new("in3"), consumer3, this));
-        this.ListOutgoing.Add(this.OutgoingProducer1 = outgoingProducer1);
+        this.AddIncoming(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
+        this.AddIncoming(this.IncomingConsumer2 = new(description?.In2 ?? new("in2"), consumer2, this));
+        this.AddIncoming(this.IncomingConsumer3 = new(description?.In3 ?? new("in3"), consumer3, this));
+        this.AddOutgoing(this.OutgoingProducer1 = outgoingProducer1);
     }
 }
 
@@ -184,9 +212,9 @@ public class BCBlockI1O2<TIn1, TOut1, TOut2> : BCBlock {
     ) : base(
         description?.Description ?? new BCDescription(typeof(BCBlockI1O1<TIn1, TOut1>).FullName ?? string.Empty)
     ) {
-        this.ListIncoming.Add(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
-        this.ListOutgoing.Add(this.OutgoingProducer1 = outgoingProducer1);
-        this.ListOutgoing.Add(this.OutgoingProducer2 = outgoingProducer2);
+        this.AddIncoming(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
+        this.AddOutgoing(this.OutgoingProducer1 = outgoingProducer1);
+        this.AddOutgoing(this.OutgoingProducer2 = outgoingProducer2);
     }
 }
 
@@ -229,10 +257,10 @@ public class BCBlockI2O2<TIn1, TIn2, TOut1, TOut2> : BCBlock {
     ) : base(
         description?.Description ?? new BCDescription(typeof(BCBlockI1O1<TIn1, TOut1>).FullName ?? string.Empty)
     ) {
-        this.ListIncoming.Add(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
-        this.ListIncoming.Add(this.IncomingConsumer2 = new(description?.In2 ?? new("in2"), consumer2, this));
-        this.ListOutgoing.Add(this.OutgoingProducer1 = outgoingProducer1);
-        this.ListOutgoing.Add(this.OutgoingProducer2 = outgoingProducer2);
+        this.AddIncoming(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
+        this.AddIncoming(this.IncomingConsumer2 = new(description?.In2 ?? new("in2"), consumer2, this));
+        this.AddOutgoing(this.OutgoingProducer1 = outgoingProducer1);
+        this.AddOutgoing(this.OutgoingProducer2 = outgoingProducer2);
     }
 }
 
@@ -277,11 +305,11 @@ public class BCBlockI3O2<TIn1, TIn2, TIn3, TOut1, TOut2> : BCBlock {
     ) : base(
         description?.Description ?? new BCDescription(typeof(BCBlockI1O1<TIn1, TOut1>).FullName ?? string.Empty)
     ) {
-        this.ListIncoming.Add(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
-        this.ListIncoming.Add(this.IncomingConsumer2 = new(description?.In2 ?? new("in2"), consumer2, this));
-        this.ListIncoming.Add(this.IncomingConsumer3 = new(description?.In3 ?? new("in3"), consumer3, this));
-        this.ListOutgoing.Add(this.OutgoingProducer1 = outgoingProducer1);
-        this.ListOutgoing.Add(this.OutgoingProducer2 = outgoingProducer2);
+        this.AddIncoming(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
+        this.AddIncoming(this.IncomingConsumer2 = new(description?.In2 ?? new("in2"), consumer2, this));
+        this.AddIncoming(this.IncomingConsumer3 = new(description?.In3 ?? new("in3"), consumer3, this));
+        this.AddOutgoing(this.OutgoingProducer1 = outgoingProducer1);
+        this.AddOutgoing(this.OutgoingProducer2 = outgoingProducer2);
     }
 }
 
@@ -326,10 +354,10 @@ public class BCBlockI1O3<TIn1, TOut1, TOut2, TOut3> : BCBlock {
     ) : base(
         description?.Description ?? new BCDescription(typeof(BCBlockI1O1<TIn1, TOut1>).FullName ?? string.Empty)
     ) {
-        this.ListIncoming.Add(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
-        this.ListOutgoing.Add(this.OutgoingProducer1 = outgoingProducer1);
-        this.ListOutgoing.Add(this.OutgoingProducer2 = outgoingProducer2);
-        this.ListOutgoing.Add(this.OutgoingProducer3 = outgoingProducer3);
+        this.AddIncoming(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
+        this.AddOutgoing(this.OutgoingProducer1 = outgoingProducer1);
+        this.AddOutgoing(this.OutgoingProducer2 = outgoingProducer2);
+        this.AddOutgoing(this.OutgoingProducer3 = outgoingProducer3);
     }
 }
 
@@ -377,11 +405,11 @@ public class BCBlockI2O3<TIn1, TIn2, TOut1, TOut2, TOut3> : BCBlock {
     ) : base(
         description?.Description ?? new BCDescription(typeof(BCBlockI1O1<TIn1, TOut1>).FullName ?? string.Empty)
     ) {
-        this.ListIncoming.Add(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
-        this.ListIncoming.Add(this.IncomingConsumer2 = new(description?.In2 ?? new("in2"), consumer2, this));
-        this.ListOutgoing.Add(this.OutgoingProducer1 = outgoingProducer1);
-        this.ListOutgoing.Add(this.OutgoingProducer2 = outgoingProducer2);
-        this.ListOutgoing.Add(this.OutgoingProducer3 = outgoingProducer3);
+        this.AddIncoming(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
+        this.AddIncoming(this.IncomingConsumer2 = new(description?.In2 ?? new("in2"), consumer2, this));
+        this.AddOutgoing(this.OutgoingProducer1 = outgoingProducer1);
+        this.AddOutgoing(this.OutgoingProducer2 = outgoingProducer2);
+        this.AddOutgoing(this.OutgoingProducer3 = outgoingProducer3);
     }
 }
 
@@ -431,12 +459,12 @@ public class BCBlockI3O3<TIn1, TIn2, TIn3, TOut1, TOut2, TOut3> : BCBlock {
     ) : base(
         description?.Description ?? new BCDescription(typeof(BCBlockI1O1<TIn1, TOut1>).FullName ?? string.Empty)
     ) {
-        this.ListIncoming.Add(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
-        this.ListIncoming.Add(this.IncomingConsumer2 = new(description?.In2 ?? new("in2"), consumer2, this));
-        this.ListIncoming.Add(this.IncomingConsumer3 = new(description?.In3 ?? new("in3"), consumer3, this));
-        this.ListOutgoing.Add(this.OutgoingProducer1 = outgoingProducer1);
-        this.ListOutgoing.Add(this.OutgoingProducer2 = outgoingProducer2);
-        this.ListOutgoing.Add(this.OutgoingProducer3 = outgoingProducer3);
+        this.AddIncoming(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
+        this.AddIncoming(this.IncomingConsumer2 = new(description?.In2 ?? new("in2"), consumer2, this));
+        this.AddIncoming(this.IncomingConsumer3 = new(description?.In3 ?? new("in3"), consumer3, this));
+        this.AddOutgoing(this.OutgoingProducer1 = outgoingProducer1);
+        this.AddOutgoing(this.OutgoingProducer2 = outgoingProducer2);
+        this.AddOutgoing(this.OutgoingProducer3 = outgoingProducer3);
     }
 }
 

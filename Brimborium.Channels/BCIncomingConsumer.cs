@@ -110,9 +110,10 @@ public sealed class BCIncomingConsumer<T>
     }
 
     BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-    public void SetMonitor(BCMonitor monitor) {
-        if (this._Monitor is { }) { return; }
+    public bool SetMonitor(BCMonitor monitor) {
+        if (this._Monitor is { }) { return false; }
         this._Monitor = monitor;
         monitor.Add(this._Consumer);
+        return true;
     }
 }

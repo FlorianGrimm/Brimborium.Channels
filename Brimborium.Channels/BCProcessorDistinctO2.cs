@@ -6,11 +6,9 @@ namespace Brimborium.Channels;
 
 public sealed class BCProcessorDistinctO2<TValue, TKey>
     : BCProcessorSyncedO2<TValue, TValue, TValue>
-    , IBCMonitored
     where TKey : notnull {
     private readonly ConcurrentDictionary<TKey, TKey> _SeenBefore;
     private readonly Func<TValue, TKey> _GetKey;
-    private BCMonitor? _Monitor;
 
     public BCProcessorDistinctO2(
             BCDescription? description,
@@ -28,7 +26,7 @@ public sealed class BCProcessorDistinctO2<TValue, TKey>
     }
 
     public override async Task OnNext(TValue value, CancellationToken cancellationToken) {
-        using (this._Monitor.LogEnter(this, nameof(this.OnNext))) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnNext))) {
             await this._Semaphore.WaitAsync(cancellationToken);
             try {
                 var key = this._GetKey(value);

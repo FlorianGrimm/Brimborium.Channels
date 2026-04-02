@@ -2,17 +2,36 @@
 
 namespace Brimborium.Channels;
 
+/// <summary>
+/// TODO
+/// </summary>
+/// <typeparam name="T">TODO</typeparam>
 public sealed class BCConnection<T>
     : IBCConnection<T>
     , IBCMonitored {
     private BCLifeTime _LifeTime;
     private BCMonitor? _Monitor;
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public BCLifeTime LifeTime => this._LifeTime;
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public IBCProducer<T> LeftOutgoingProducer { get; }
+
+    /// <summary>
+    /// TODO
+    /// </summary>
     public IBCConsumer<T> RightIncomingConsumer { get; }
 
+    /// <summary>
+    /// TODO
+    /// </summary>
+    /// <param name="outgoingProducer">TODO</param>
+    /// <param name="incomingConsumer">TODO</param>
     public BCConnection(IBCProducer<T> outgoingProducer, IBCConsumer<T> incomingConsumer) {
         this.LeftOutgoingProducer = outgoingProducer;
         this.RightIncomingConsumer = incomingConsumer;
@@ -46,9 +65,10 @@ public sealed class BCConnection<T>
     }
 
     BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-    public void SetMonitor(BCMonitor monitor) {
-        if (this._Monitor is { }) { return; }
+    public bool SetMonitor(BCMonitor monitor) {
+        if (this._Monitor is { }) { return false; }
         this._Monitor = monitor;
         monitor.Add(this.RightIncomingConsumer);
+        return true;
     }
 }
