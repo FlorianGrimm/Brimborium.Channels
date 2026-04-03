@@ -5,10 +5,13 @@ using System.Threading.Channels;
 namespace Brimborium.Channels;
 
 /// <summary>
-/// TODO
+/// A processor that decouples the upstream producer from the downstream consumer
+/// by writing incoming values into a <see cref="System.Threading.Channels.Channel{T}"/>
+/// and draining them asynchronously in a background loop.
+/// User-supplied delegates handle <c>OnNext</c>, and optionally <c>OnError</c> and <c>OnComplete</c>.
 /// </summary>
-/// <typeparam name="TIn"></typeparam>
-/// <typeparam name="TOut"></typeparam>
+/// <typeparam name="TIn">The type of values received from upstream.</typeparam>
+/// <typeparam name="TOut">The type of values forwarded to the downstream consumer.</typeparam>
 public sealed class BCBuffer<TIn, TOut>
     : BCProcessorUnsync<TIn, TOut> {
     private readonly Func<TIn, IBCConsumer<TOut>, CancellationToken, Task> _OnNext;

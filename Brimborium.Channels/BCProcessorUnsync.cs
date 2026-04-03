@@ -4,6 +4,12 @@ using System.Numerics;
 
 namespace Brimborium.Channels;
 
+/// <summary>
+/// Abstract base class for single-output processors that do <em>not</em> apply any internal locking.
+/// Subclasses are responsible for their own thread safety when required.
+/// </summary>
+/// <typeparam name="TIn">The type of values received from upstream.</typeparam>
+/// <typeparam name="TOut">The type of values forwarded to the downstream consumer.</typeparam>
 public abstract class BCProcessorUnsync<TIn, TOut>
     : BCPartMonitored
     , IBCConsumer<TIn> {
@@ -52,6 +58,13 @@ public abstract class BCProcessorUnsync<TIn, TOut>
 }
 
 
+/// <summary>
+/// Abstract base class for dual-output processors that do <em>not</em> apply any internal locking.
+/// Forwards signals to two downstream consumers; subclasses are responsible for thread safety.
+/// </summary>
+/// <typeparam name="TIn">The type of values received from upstream.</typeparam>
+/// <typeparam name="TOut1">The type of values forwarded to the first downstream consumer.</typeparam>
+/// <typeparam name="TOut2">The type of values forwarded to the second downstream consumer.</typeparam>
 public abstract class BCProcessorUnsyncO2<TIn, TOut1, TOut2>
     : BCPartMonitored
     , IBCConsumer<TIn> {

@@ -4,6 +4,11 @@ using System.Runtime.ExceptionServices;
 
 namespace Brimborium.Channels;
 
+/// <summary>
+/// Carries an exception through the pipeline together with its <see cref="System.Runtime.ExceptionServices.ExceptionDispatchInfo"/>
+/// (preserving the original stack trace) and an optional context <see cref="Value"/>.
+/// Tracks whether the error has been handled or logged so unhandled errors can be re-thrown.
+/// </summary>
 public sealed record class BCError(
     Exception Error,
     ExceptionDispatchInfo DispatchInfo,

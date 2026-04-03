@@ -4,7 +4,19 @@ using System.Collections.Concurrent;
 
 namespace Brimborium.Channels;
 
+/// <summary>
+/// Wraps a value together with a flag indicating whether it is the first occurrence of its key in the stream.
+/// </summary>
+/// <typeparam name="T">The type of the wrapped value.</typeparam>
 public record struct BCDistinctValue<T>(T Value, bool First);
+
+/// <summary>
+/// Processor that tags each incoming value as first-seen (<c>First = true</c>) or a duplicate (<c>First = false</c>)
+/// by tracking seen keys via a <see cref="System.Collections.Concurrent.ConcurrentDictionary{TKey,TValue}"/>.
+/// Both kinds are forwarded to a single downstream consumer as <see cref="BCDistinctValue{TValue}"/>.
+/// </summary>
+/// <typeparam name="TValue">The type of values received from upstream.</typeparam>
+/// <typeparam name="TKey">The type of the key used to identify duplicates.</typeparam>
 public sealed class BCProcessorDistinctO1<TValue, TKey>
     : BCProcessorSynced<TValue, BCDistinctValue<TValue>>
     , IBCMonitored

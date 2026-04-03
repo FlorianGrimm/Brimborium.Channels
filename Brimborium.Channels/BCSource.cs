@@ -2,6 +2,12 @@
 
 namespace Brimborium.Channels;
 
+/// <summary>
+/// The entry point of a pipeline that pushes values into a fixed downstream consumer.
+/// Acts as both an <see cref="IBCProducer"/> and an <see cref="IBCConsumer{T}"/>,
+/// serialising all calls through a semaphore before forwarding them to the next consumer.
+/// </summary>
+/// <typeparam name="T">The type of values produced by this source.</typeparam>
 public sealed class BCSource<T>
     : BCPartMonitored
     , IBCProducer
@@ -75,6 +81,10 @@ public sealed class BCSource<T>
     }
 }
 
+/// <summary>
+/// Extension methods for <see cref="IBCConsumer{T}"/> that add convenience overloads
+/// for pushing sequences of values into a consumer.
+/// </summary>
 public static class IBCConsumerExtension {
     extension<T>(IBCConsumer<T> that) {
         public async Task OnNextEnumerable(IEnumerable<T> listValue, CancellationToken cancellationToken) {

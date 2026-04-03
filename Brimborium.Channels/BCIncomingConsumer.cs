@@ -2,6 +2,13 @@
 
 namespace Brimborium.Channels;
 
+/// <summary>
+/// The typed input port of a <see cref="BCBlock"/>.
+/// Accepts connections from upstream producers via <see cref="IBCConsumerSubscribable{T}.OnSubscribe"/>,
+/// serialises all incoming signals through a semaphore, and forwards them to the inner consumer.
+/// Signals the owning block to transition its lifetime when all incoming connections have completed.
+/// </summary>
+/// <typeparam name="T">The type of values received on this input port.</typeparam>
 public sealed class BCIncomingConsumer<T>
     : BCPartMonitored
     , IBCConsumerSubscribable<T> {

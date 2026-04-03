@@ -4,6 +4,12 @@ using System.Runtime.CompilerServices;
 
 namespace Brimborium.Channels;
 
+/// <summary>
+/// Abstract base class for single-output processors that serialise all incoming signals
+/// (OnNext, OnError, OnComplete) through a <see cref="SemaphoreSlim"/> before forwarding to the next consumer.
+/// </summary>
+/// <typeparam name="TIn">The type of values received from upstream.</typeparam>
+/// <typeparam name="TOut">The type of values forwarded to the downstream consumer.</typeparam>
 public abstract class BCProcessorSynced<TIn, TOut>
     : BCPartMonitored
     , IBCConsumer<TIn> {
@@ -63,6 +69,13 @@ public abstract class BCProcessorSynced<TIn, TOut>
 
 
 
+/// <summary>
+/// Abstract base class for dual-output processors that serialise all incoming signals
+/// through a <see cref="SemaphoreSlim"/> before forwarding to two downstream consumers.
+/// </summary>
+/// <typeparam name="TIn">The type of values received from upstream.</typeparam>
+/// <typeparam name="TOut1">The type of values forwarded to the first downstream consumer.</typeparam>
+/// <typeparam name="TOut2">The type of values forwarded to the second downstream consumer.</typeparam>
 public abstract class BCProcessorSyncedO2<TIn, TOut1, TOut2>
     : BCPartMonitored
     , IBCConsumer<TIn> {

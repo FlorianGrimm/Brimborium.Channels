@@ -2,6 +2,13 @@
 
 namespace Brimborium.Channels;
 
+/// <summary>
+/// A processor that applies caller-supplied delegates for <c>OnNext</c>,
+/// and optionally <c>OnError</c> and <c>OnComplete</c>.
+/// All calls are serialised through a semaphore (inherits <see cref="BCProcessorSynced{TIn,TOut}"/>).
+/// </summary>
+/// <typeparam name="TIn">The type of values received from upstream.</typeparam>
+/// <typeparam name="TOut">The type of values forwarded to the downstream consumer.</typeparam>
 public sealed class BCDelegate<TIn, TOut>
     : BCProcessorSynced<TIn, TOut>
     , IBCMonitored {

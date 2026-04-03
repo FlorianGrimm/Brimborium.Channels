@@ -3,7 +3,9 @@
 namespace Brimborium.Channels;
 
 /// <summary>
-/// TODO
+/// Abstract base class for composite pipeline blocks.
+/// Maintains lists of incoming consumers and outgoing producers,
+/// and coordinates lifetime and monitoring across all of them.
 /// </summary>
 public class BCBlock
     : BCPartMonitored

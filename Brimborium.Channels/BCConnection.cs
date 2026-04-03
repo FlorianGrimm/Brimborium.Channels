@@ -3,9 +3,11 @@
 namespace Brimborium.Channels;
 
 /// <summary>
-/// TODO
+/// Concrete implementation of <see cref="IBCConnection{T}"/>.
+/// Represents the live, typed link between an <see cref="IBCProducer{T}"/> (left side)
+/// and an <see cref="IBCConsumer{T}"/> (right side), forwarding all signals to the right consumer.
 /// </summary>
-/// <typeparam name="T">TODO</typeparam>
+/// <typeparam name="T">The type of values flowing through this connection.</typeparam>
 public sealed class BCConnection<T>
     :BCPartMonitored
     , IBCConnection<T> {

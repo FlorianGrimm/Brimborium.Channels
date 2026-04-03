@@ -2,22 +2,28 @@
 
 namespace Brimborium.Channels;
 
+/// <summary>Non-generic marker interface for an in-flight tracking unit; exposes its unique id.</summary>
 public interface IBCTracking {
     long GetId();
 }
 
+/// <summary>
+/// Typed tracking interface that combines consumer signals, monitoring support,
+/// and the non-generic <see cref="IBCTracking"/> id marker.
+/// </summary>
+/// <typeparam name="TOut">The type of output values this tracking unit can receive.</typeparam>
 public interface IBCTracking<TOut>
     : IBCConsumer<TOut>
     , IBCMonitored
-    , IBCTracking { 
+    , IBCTracking {
 }
 
-
 /// <summary>
-/// TODO
+/// Callback interface used by a tracking processor to notify its manager
+/// when an individual in-flight request has completed or failed.
 /// </summary>
-/// <typeparam name="TIn">TODO</typeparam>
-/// <typeparam name="TOut">TODO</typeparam>
+/// <typeparam name="TIn">The type of the original input value.</typeparam>
+/// <typeparam name="TOut">The type of the output value produced by the request.</typeparam>
 public interface IBCTrackingManager<TIn, TOut> {
     Task OnTrackingComplete(BCTracking<TIn, TOut> tracking, CancellationToken cancellationToken);
     Task OnTrackingError(BCTracking<TIn, TOut> tracking, BCError value, CancellationToken cancellationToken);
@@ -25,11 +31,14 @@ public interface IBCTrackingManager<TIn, TOut> {
 
 
 /// <summary>
-/// TODO
+/// Represents a single in-flight request created by a tracking processor.
+/// Holds the original input <see cref="Value"/> and forwards output signals to the downstream consumer.
+/// Reports its own completion or failure back to the <see cref="IBCTrackingManager"/> so the manager
+/// can decide when all work is done and the downstream <c>OnComplete</c> can be forwarded.
 /// </summary>
-/// <typeparam name="TIn">TODO</typeparam>
-/// <typeparam name="TOut">TODO</typeparam>
-public class BCTracking<TIn, TOut> 
+/// <typeparam name="TIn">The type of the original input value.</typeparam>
+/// <typeparam name="TOut">The type of the output value produced by this tracking unit.</typeparam>
+public class BCTracking<TIn, TOut>
     : BCPartMonitored
     , IBCConsumer<TOut>
     , IBCTracking

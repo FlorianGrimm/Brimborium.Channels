@@ -3,7 +3,8 @@
 namespace Brimborium.Channels;
 
 /// <summary>
-/// TODO
+/// Represents the three lifecycle stages of a pipeline part.
+/// Transitions are strictly one-way: <see cref="Active"/> → <see cref="Completing"/> → <see cref="Completed"/>.
 /// </summary>
 public enum BCLifeTime {
     /// <summary>
@@ -23,7 +24,8 @@ public enum BCLifeTime {
 }
 
 /// <summary>
-/// TODO
+/// Thread-safe helpers that atomically advance a <see cref="BCLifeTime"/> field
+/// through its one-way transitions using <see cref="System.Threading.Interlocked.CompareExchange"/>.
 /// </summary>
 public static class BCLifeTimeExtension {
     /// <summary>

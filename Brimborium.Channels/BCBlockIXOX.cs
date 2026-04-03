@@ -1,8 +1,8 @@
 ﻿namespace Brimborium.Channels;
 
-/// <summary>
-/// TODO
-/// </summary>
+/// <summary>A <see cref="BCBlock"/> with one typed input and one typed output.</summary>
+/// <typeparam name="TIn1">The type of values accepted on the single input port.</typeparam>
+/// <typeparam name="TOut1">The type of values emitted on the single output port.</typeparam>
 public class BCBlockI1O1<TIn1, TOut1> : BCBlock {
     public static BCBlockI1O1<TIn1, TOut1> Create(
         BCBlockI1O1Description? description,
@@ -29,6 +29,7 @@ public class BCBlockI1O1<TIn1, TOut1> : BCBlock {
     }
 }
 
+/// <summary>Optional description record for naming the parts of a <see cref="BCBlockI1O1{TIn1,TOut1}"/>.</summary>
 public record BCBlockI1O1Description(
     BCDescription? Description = default,
     BCDescription? In1 = default,
@@ -36,6 +37,10 @@ public record BCBlockI1O1Description(
 );
 
 
+/// <summary>A <see cref="BCBlock"/> with two typed inputs and one typed output.</summary>
+/// <typeparam name="TIn1">The type of values accepted on the first input port.</typeparam>
+/// <typeparam name="TIn2">The type of values accepted on the second input port.</typeparam>
+/// <typeparam name="TOut1">The type of values emitted on the single output port.</typeparam>
 public class BCBlockI2O1<TIn1, TIn2, TOut1> : BCBlock {
     public static BCBlockI2O1<TIn1, TIn2, TOut1> Create(
         BCBlockI2O1Description? description,
@@ -67,6 +72,7 @@ public class BCBlockI2O1<TIn1, TIn2, TOut1> : BCBlock {
     }
 }
 
+/// <summary>Optional description record for naming the parts of a <see cref="BCBlockI2O1{TIn1,TIn2,TOut1}"/>.</summary>
 public record BCBlockI2O1Description(
     BCDescription? Description = default,
     BCDescription? In1 = default,
@@ -74,6 +80,11 @@ public record BCBlockI2O1Description(
     BCDescription? Out1 = default
 );
 
+/// <summary>A <see cref="BCBlock"/> with three typed inputs and one typed output.</summary>
+/// <typeparam name="TIn1">The type of values accepted on the first input port.</typeparam>
+/// <typeparam name="TIn2">The type of values accepted on the second input port.</typeparam>
+/// <typeparam name="TIn3">The type of values accepted on the third input port.</typeparam>
+/// <typeparam name="TOut1">The type of values emitted on the single output port.</typeparam>
 public class BCBlockI3O1<TIn1, TIn2, TIn3, TOut1> : BCBlock {
     public static BCBlockI3O1<TIn1, TIn2, TIn3, TOut1> Create(
         BCBlockI3O1Description? description,
@@ -110,6 +121,7 @@ public class BCBlockI3O1<TIn1, TIn2, TIn3, TOut1> : BCBlock {
     }
 }
 
+/// <summary>Optional description record for naming the parts of a <see cref="BCBlockI3O1{TIn1,TIn2,TIn3,TOut1}"/>.</summary>
 public record BCBlockI3O1Description(
     BCDescription? Description = default,
     BCDescription? In1 = default,
@@ -118,6 +130,10 @@ public record BCBlockI3O1Description(
     BCDescription? Out1 = default
 );
 
+/// <summary>A <see cref="BCBlock"/> with one typed input and two typed outputs.</summary>
+/// <typeparam name="TIn1">The type of values accepted on the single input port.</typeparam>
+/// <typeparam name="TOut1">The type of values emitted on the first output port.</typeparam>
+/// <typeparam name="TOut2">The type of values emitted on the second output port.</typeparam>
 public class BCBlockI1O2<TIn1, TOut1, TOut2> : BCBlock {
     public static BCBlockI1O2<TIn1, TOut1, TOut2> Create(
         BCBlockI1O2Description? description,
@@ -149,6 +165,7 @@ public class BCBlockI1O2<TIn1, TOut1, TOut2> : BCBlock {
     }
 }
 
+/// <summary>Optional description record for naming the parts of a <see cref="BCBlockI1O2{TIn1,TOut1,TOut2}"/>.</summary>
 public record BCBlockI1O2Description(
     BCDescription? Description = default,
     BCDescription? In1 = default,
@@ -159,6 +176,11 @@ public record BCBlockI1O2Description(
 
 
 
+/// <summary>A <see cref="BCBlock"/> with two typed inputs and two typed outputs.</summary>
+/// <typeparam name="TIn1">The type of values accepted on the first input port.</typeparam>
+/// <typeparam name="TIn2">The type of values accepted on the second input port.</typeparam>
+/// <typeparam name="TOut1">The type of values emitted on the first output port.</typeparam>
+/// <typeparam name="TOut2">The type of values emitted on the second output port.</typeparam>
 public class BCBlockI2O2<TIn1, TIn2, TOut1, TOut2> : BCBlock {
     public static BCBlockI2O2<TIn1, TIn2, TOut1, TOut2> Create(
         BCBlockI2O2Description? description,
@@ -195,6 +217,7 @@ public class BCBlockI2O2<TIn1, TIn2, TOut1, TOut2> : BCBlock {
     }
 }
 
+/// <summary>Optional description record for naming the parts of a <see cref="BCBlockI2O2{TIn1,TIn2,TOut1,TOut2}"/>.</summary>
 public record BCBlockI2O2Description(
     BCDescription? Description = default,
     BCDescription? In1 = default,
@@ -203,6 +226,12 @@ public record BCBlockI2O2Description(
     BCDescription? Out2 = default
 );
 
+/// <summary>A <see cref="BCBlock"/> with three typed inputs and two typed outputs.</summary>
+/// <typeparam name="TIn1">The type of values accepted on the first input port.</typeparam>
+/// <typeparam name="TIn2">The type of values accepted on the second input port.</typeparam>
+/// <typeparam name="TIn3">The type of values accepted on the third input port.</typeparam>
+/// <typeparam name="TOut1">The type of values emitted on the first output port.</typeparam>
+/// <typeparam name="TOut2">The type of values emitted on the second output port.</typeparam>
 public class BCBlockI3O2<TIn1, TIn2, TIn3, TOut1, TOut2> : BCBlock {
     public static BCBlockI3O2<TIn1, TIn2, TIn3, TOut1, TOut2> Create(
         BCBlockI3O2Description? description,
@@ -244,6 +273,7 @@ public class BCBlockI3O2<TIn1, TIn2, TIn3, TOut1, TOut2> : BCBlock {
     }
 }
 
+/// <summary>Optional description record for naming the parts of a <see cref="BCBlockI3O2{TIn1,TIn2,TIn3,TOut1,TOut2}"/>.</summary>
 public record BCBlockI3O2Description(
     BCDescription? Description = default,
     BCDescription? In1 = default,
@@ -256,6 +286,11 @@ public record BCBlockI3O2Description(
 
 
 
+/// <summary>A <see cref="BCBlock"/> with one typed input and three typed outputs.</summary>
+/// <typeparam name="TIn1">The type of values accepted on the single input port.</typeparam>
+/// <typeparam name="TOut1">The type of values emitted on the first output port.</typeparam>
+/// <typeparam name="TOut2">The type of values emitted on the second output port.</typeparam>
+/// <typeparam name="TOut3">The type of values emitted on the third output port.</typeparam>
 public class BCBlockI1O3<TIn1, TOut1, TOut2, TOut3> : BCBlock {
     public static BCBlockI1O3<TIn1, TOut1, TOut2, TOut3> Create(
         BCBlockI1O3Description? description,
@@ -292,6 +327,7 @@ public class BCBlockI1O3<TIn1, TOut1, TOut2, TOut3> : BCBlock {
     }
 }
 
+/// <summary>Optional description record for naming the parts of a <see cref="BCBlockI1O3{TIn1,TOut1,TOut2,TOut3}"/>.</summary>
 public record BCBlockI1O3Description(
     BCDescription? Description = default,
     BCDescription? In1 = default,
@@ -303,6 +339,12 @@ public record BCBlockI1O3Description(
 
 
 
+/// <summary>A <see cref="BCBlock"/> with two typed inputs and three typed outputs.</summary>
+/// <typeparam name="TIn1">The type of values accepted on the first input port.</typeparam>
+/// <typeparam name="TIn2">The type of values accepted on the second input port.</typeparam>
+/// <typeparam name="TOut1">The type of values emitted on the first output port.</typeparam>
+/// <typeparam name="TOut2">The type of values emitted on the second output port.</typeparam>
+/// <typeparam name="TOut3">The type of values emitted on the third output port.</typeparam>
 public class BCBlockI2O3<TIn1, TIn2, TOut1, TOut2, TOut3> : BCBlock {
     public static BCBlockI2O3<TIn1, TIn2, TOut1, TOut2, TOut3> Create(
         BCBlockI2O3Description? description,
@@ -344,6 +386,7 @@ public class BCBlockI2O3<TIn1, TIn2, TOut1, TOut2, TOut3> : BCBlock {
     }
 }
 
+/// <summary>Optional description record for naming the parts of a <see cref="BCBlockI2O3{TIn1,TIn2,TOut1,TOut2,TOut3}"/>.</summary>
 public record BCBlockI2O3Description(
     BCDescription? Description = default,
     BCDescription? In1 = default,
@@ -353,6 +396,13 @@ public record BCBlockI2O3Description(
     BCDescription? Out3 = default
 );
 
+/// <summary>A <see cref="BCBlock"/> with three typed inputs and three typed outputs.</summary>
+/// <typeparam name="TIn1">The type of values accepted on the first input port.</typeparam>
+/// <typeparam name="TIn2">The type of values accepted on the second input port.</typeparam>
+/// <typeparam name="TIn3">The type of values accepted on the third input port.</typeparam>
+/// <typeparam name="TOut1">The type of values emitted on the first output port.</typeparam>
+/// <typeparam name="TOut2">The type of values emitted on the second output port.</typeparam>
+/// <typeparam name="TOut3">The type of values emitted on the third output port.</typeparam>
 public class BCBlockI3O3<TIn1, TIn2, TIn3, TOut1, TOut2, TOut3> : BCBlock {
     public static BCBlockI3O3<TIn1, TIn2, TIn3, TOut1, TOut2, TOut3> Create(
         BCBlockI3O3Description? description,
@@ -399,6 +449,7 @@ public class BCBlockI3O3<TIn1, TIn2, TIn3, TOut1, TOut2, TOut3> : BCBlock {
     }
 }
 
+/// <summary>Optional description record for naming the parts of a <see cref="BCBlockI3O3{TIn1,TIn2,TIn3,TOut1,TOut2,TOut3}"/>.</summary>
 public record BCBlockI3O3Description(
     BCDescription? Description = default,
     BCDescription? In1 = default,

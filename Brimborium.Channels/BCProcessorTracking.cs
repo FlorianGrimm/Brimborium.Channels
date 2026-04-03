@@ -3,15 +3,16 @@
 namespace Brimborium.Channels;
 
 /// <summary>
-/// BCProcessorTracking, BCProcessorTrackingNext, _TrackingManager, _NextConsumer
-/// BCProcessorTracking.OnNext
-///     _CreateRequest
-///     _TrackingManager.Add
-///     _SendRequest
+/// Abstract processor that wraps each incoming value in a <see cref="BCTracking{TIn,TOut}"/> unit
+/// and dispatches it asynchronously via <c>SendRequest</c>.
+/// A <see cref="BCTrackingManager"/> keeps count of in-flight trackings and delays the <c>OnComplete</c>
+/// signal to the downstream consumer until all of them have reported back.
+/// Subclasses implement <c>CreateRequest</c> to construct the tracking object and
+/// <c>SendRequest</c> to dispatch it.
 /// </summary>
-/// <typeparam name="TIn"></typeparam>
-/// <typeparam name="TOut"></typeparam>
-/// <typeparam name="TBCTracking"></typeparam>
+/// <typeparam name="TIn">The type of values received from upstream.</typeparam>
+/// <typeparam name="TOut">The type of values forwarded to the downstream consumer.</typeparam>
+/// <typeparam name="TBCTracking">The concrete <see cref="BCTracking{TIn,TOut}"/> subtype used by this processor.</typeparam>
 public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
     : BCPartMonitored
     , IBCConsumer<TIn>
@@ -152,6 +153,11 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
     // SetMonitor(BCMonitor monitor) 
     // BCChannelTrackingNext is NextConsumer
 
+    /// <summary>
+    /// Internal consumer placed between this processor and the downstream consumer.
+    /// Routes completed/errored tracking callbacks to the <see cref="BCTrackingManager"/>
+    /// and passes value signals directly to the downstream consumer.
+    /// </summary>
     protected sealed class BCProcessorTrackingNext
         : IBCConsumer<TOut>
         , IBCMonitored{

@@ -3,10 +3,13 @@
 namespace Brimborium.Channels;
 
 /// <summary>
-/// TODO
+/// Terminal consumer that captures the last value received from the stream.
+/// The captured value is exposed as a <see cref="System.Threading.Tasks.Task{T}"/> that completes when
+/// <c>OnComplete</c> is called, or faults when <c>OnError</c> is called.
+/// If no value arrived before completion, the task is cancelled.
 /// </summary>
-/// <typeparam name="T">TODO</typeparam>
-public sealed class BCConsumerSingleValue<T> 
+/// <typeparam name="T">The type of value captured by this consumer.</typeparam>
+public sealed class BCConsumerSingleValue<T>
     : BCPartMonitored
     , IBCConsumerSubscribable<T> {
     private readonly TaskCompletionSource<T?> _Result = new();

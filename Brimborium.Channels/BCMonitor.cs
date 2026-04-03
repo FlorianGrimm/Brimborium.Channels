@@ -3,8 +3,11 @@
 namespace Brimborium.Channels;
 
 /// <summary>
-/// TODO - change this to ILogger
+/// Diagnostic observer that can be attached to pipeline parts.
+/// Logs named Start/End scopes for every operation to the console.
+/// Cascades to all downstream parts when attached via <see cref="IBCMonitored.SetMonitor"/>.
 /// </summary>
+/// <remarks>Intended to be replaced by an <c>ILogger</c>-based implementation in the future.</remarks>
 public class BCMonitor {
     public BCMonitor() {
     }
@@ -33,14 +36,20 @@ public class BCMonitor {
     }
 }
 
+/// <summary>Immutable log record produced by <see cref="BCMonitor"/> for a single named event.</summary>
 public sealed record LogItem(IBCMonitored Part, string Name, string Kind);
 
+/// <summary>
+/// Disposable scope returned by <see cref="BCMonitor.LogEnter"/>.
+/// Logs a <c>Start</c> event on creation and an <c>End</c> event on disposal.
+/// </summary>
 public record struct BCMonitorLogScope(BCMonitor Monitor, IBCPart Part, string Name)
     : IDisposable {
     public void Dispose() {
         this.Monitor.Log(this.Part, this.Name, "End");
     }
 }
+/// <summary>Extension methods for <see cref="BCMonitor"/> for convenient part registration.</summary>
 public static class BCMonitorExtension {
     extension(BCMonitor thatMonitor) {
         public BCMonitor Add(IBCPart part) {

@@ -3,10 +3,12 @@
 namespace Brimborium.Channels;
 
 /// <summary>
-/// TODO
+/// The typed output port of a <see cref="BCBlock"/> that implements <see cref="IBCProducer{T}"/>.
+/// Maintains a list of active outgoing <see cref="IBCConnection{T}"/> subscriptions and fans out
+/// every <c>OnNext</c>, <c>OnError</c>, and <c>OnComplete</c> signal to all active connections.
 /// </summary>
-/// <typeparam name="T"></typeparam>
-public sealed class BCOutgoingProducer<T> 
+/// <typeparam name="T">The type of values emitted by this producer.</typeparam>
+public sealed class BCOutgoingProducer<T>
     : BCPartMonitored
     , IBCConsumer<T>, IBCProducer<T> {
     private readonly SemaphoreSlim _Semaphore = new(1, 1);

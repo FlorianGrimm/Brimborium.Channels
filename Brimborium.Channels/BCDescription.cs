@@ -2,6 +2,10 @@
 
 namespace Brimborium.Channels;
 
+/// <summary>
+/// Immutable record that holds a human-readable <see cref="Name"/> identifying a pipeline part
+/// in logs and diagnostics.
+/// </summary>
 public record class BCDescription(
     string Name
 ) {

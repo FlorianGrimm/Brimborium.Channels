@@ -5,7 +5,9 @@ using System.Collections.Concurrent;
 namespace Brimborium.Channels;
 
 /// <summary>
-/// TODO
+/// Coordinates in-flight tracking units for a tracking processor.
+/// Tracks active <see cref="IBCTracking"/> instances by id and delays the downstream
+/// <c>OnComplete</c> signal until all registered trackings have finished.
 /// </summary>
 public interface IBCTrackingManager : IBCPart, IBCConsumer {
     /// <summary>
@@ -34,9 +36,12 @@ public interface IBCTrackingManager : IBCPart, IBCConsumer {
 }
 
 /// <summary>
-/// TODO
+/// Concrete implementation of <see cref="IBCTrackingManager"/>.
+/// Uses a <see cref="System.Collections.Concurrent.ConcurrentDictionary{TKey,TValue}"/> to track
+/// in-flight <see cref="IBCTracking"/> units by id and forwards <c>OnComplete</c> downstream
+/// only when all active trackings have reported back and the upstream has completed.
 /// </summary>
-public class BCTrackingManager 
+public class BCTrackingManager
     : BCPartMonitored
     , IBCTrackingManager {
     private readonly ConcurrentDictionary<long, IBCTracking> _Tracking = new();

@@ -1,9 +1,11 @@
 namespace Brimborium.Channels;
 
 /// <summary>
-/// TODO
+/// Terminal consumer that accumulates all received values into a <see cref="List{T}"/>.
+/// The collected list is exposed as a <see cref="System.Threading.Tasks.Task{T}"/> that completes when
+/// <c>OnComplete</c> is called, or faults when <c>OnError</c> is called.
 /// </summary>
-/// <typeparam name="T">TODO</typeparam>
+/// <typeparam name="T">The type of values collected by this consumer.</typeparam>
 public sealed class BCConsumerListValue<T>
     : BCPartMonitored
     , IBCConsumerSubscribable<T>

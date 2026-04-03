@@ -4,6 +4,13 @@ using System.Collections.Concurrent;
 
 namespace Brimborium.Channels;
 
+/// <summary>
+/// Processor that routes each incoming value to one of two downstream consumers based on uniqueness:
+/// first-seen values go to <c>NextConsumer1</c>; duplicates go to <c>NextConsumer2</c>.
+/// Uniqueness is determined by a caller-supplied key selector and equality comparer.
+/// </summary>
+/// <typeparam name="TValue">The type of values received from upstream.</typeparam>
+/// <typeparam name="TKey">The type of the key used to identify duplicates.</typeparam>
 public sealed class BCProcessorDistinctO2<TValue, TKey>
     : BCProcessorSyncedO2<TValue, TValue, TValue>
     where TKey : notnull {
