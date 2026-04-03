@@ -205,10 +205,11 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
 
         public async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
             using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
-                await this._TrackingManager.WaitRightCompletedAsync(cancellationToken);
-                await this._NextConsumer.WaitRightCompletedAsync(cancellationToken);
                 await this._TrackingManager.WaitSelfCompletedAsync(cancellationToken);
                 await this._NextConsumer.WaitSelfCompletedAsync(cancellationToken);
+
+                await this._TrackingManager.WaitRightCompletedAsync(cancellationToken);
+                await this._NextConsumer.WaitRightCompletedAsync(cancellationToken);
             }
         }
 

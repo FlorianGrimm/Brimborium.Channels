@@ -18,17 +18,6 @@ public interface IBCTracking<TOut>
     , IBCTracking {
 }
 
-/// <summary>
-/// Callback interface used by a tracking processor to notify its manager
-/// when an individual in-flight request has completed or failed.
-/// </summary>
-/// <typeparam name="TIn">The type of the original input value.</typeparam>
-/// <typeparam name="TOut">The type of the output value produced by the request.</typeparam>
-public interface IBCTrackingManager<TIn, TOut> {
-    Task OnTrackingComplete(BCTracking<TIn, TOut> tracking, CancellationToken cancellationToken);
-    Task OnTrackingError(BCTracking<TIn, TOut> tracking, BCError value, CancellationToken cancellationToken);
-}
-
 
 /// <summary>
 /// Represents a single in-flight request created by a tracking processor.

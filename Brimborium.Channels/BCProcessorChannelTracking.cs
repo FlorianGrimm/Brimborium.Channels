@@ -41,9 +41,9 @@ public abstract class BCProcessorChannelTracking<TIn, TOut, TBCTracking>
                 > createRequest,
             Func<TBCTracking, CancellationToken, Task> sendRequest,
             IBCConsumer<TOut> nextConsumer
-        ) :base(
+        ) : base(
             description
-        ){
+        ) {
         this._CreateRequest = createRequest;
         this._SendRequest = sendRequest;
         this._NextDescription = new BCDescription($"{description.Name}-Next");
@@ -131,6 +131,7 @@ public abstract class BCProcessorChannelTracking<TIn, TOut, TBCTracking>
     public override bool SetMonitor(BCMonitor monitor) {
         var result = base.SetMonitor(monitor);
         if (result) {
+            monitor.AddMonitored(this._TrackingManager);
             monitor.Add(this._NextConsumer);
         }
         return true;
@@ -151,12 +152,13 @@ public abstract class BCProcessorChannelTracking<TIn, TOut, TBCTracking>
         private readonly BCTrackingManager _TrackingManager;
         private readonly IBCConsumer<TOut> _NextConsumer;
         private BCMonitor? _Monitor;
+        private readonly SemaphoreSlim _Semaphore = new(1, 1);
 
         public BCProcessorChannelTrackingNext(
                 BCDescription description,
                 BCTrackingManager trackingManager,
                 IBCConsumer<TOut> nextConsumer
-            ){
+            ) {
             this.Description = description;
             this._TrackingManager = trackingManager;
             this._NextConsumer = nextConsumer;
@@ -167,27 +169,55 @@ public abstract class BCProcessorChannelTracking<TIn, TOut, TBCTracking>
         public BCDescription Description { get; }
 
         public async Task OnTrackingComplete(BCTracking<TIn, TOut> tracking, CancellationToken cancellationToken) {
-            await this._TrackingManager.OnTrackingComplete(tracking, cancellationToken);
+            await this._Semaphore.WaitAsync();
+            try {
+                await this._TrackingManager.OnTrackingComplete(tracking, cancellationToken);
+            } finally {
+                this._Semaphore.Release();
+            }
         }
 
         public async Task OnTrackingError(BCTracking<TIn, TOut> tracking, BCError value, CancellationToken cancellationToken) {
-            await this.OnError(value, cancellationToken);
+            await this._Semaphore.WaitAsync();
+            try {
+                await this.OnError(value, cancellationToken);
+            } finally {
+                this._Semaphore.Release();
+            }
         }
 
         public async Task OnComplete(CancellationToken cancellationToken) {
-            await this._TrackingManager.OnComplete(cancellationToken);
+            await this._Semaphore.WaitAsync();
+            try {
+                await this._TrackingManager.OnComplete(cancellationToken);
+            } finally {
+                this._Semaphore.Release();
+            }
+
         }
 
-        public Task OnError(BCError value, CancellationToken cancellationToken) {
-            return this._NextConsumer.OnError(value, cancellationToken);
+        public async Task OnError(BCError value, CancellationToken cancellationToken) {
+            await this._Semaphore.WaitAsync();
+            try {
+                await this._NextConsumer.OnError(value, cancellationToken);
+            } finally {
+                this._Semaphore.Release();
+            }
+
         }
 
-        public Task OnNext(TOut value, CancellationToken cancellationToken) {
-            return this._NextConsumer.OnNext(value, cancellationToken);
+        public async Task OnNext(TOut value, CancellationToken cancellationToken) {
+            await this._Semaphore.WaitAsync();
+            try {
+                await this._NextConsumer.OnNext(value, cancellationToken);
+            } finally {
+                this._Semaphore.Release();
+            }
         }
 
-        public Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
-            return Task.CompletedTask;
+        public async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+            await this._Semaphore.WaitAsync();
+            this._Semaphore.Release();
         }
 
         public async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {

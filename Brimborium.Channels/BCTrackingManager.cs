@@ -45,7 +45,7 @@ public class BCTrackingManager
     : BCPartMonitored
     , IBCTrackingManager {
     private readonly ConcurrentDictionary<long, IBCTracking> _Tracking = new();
-    private readonly TaskCompletionSource _Completion=new();
+    private readonly TaskCompletionSource _Completion = new();
     private readonly IBCConsumer _NextConsumer;
 
     public BCTrackingManager(
@@ -112,11 +112,26 @@ public class BCTrackingManager
         }
     }
 
-    public override Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
-        return Task.CompletedTask;
+    public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, "WaitSelfCompletedAsync")) {
+            await this._Completion.Task.ConfigureAwait(false);
+        }
     }
 
-    public override Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
-        return Task.CompletedTask;
+    public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+            await this._NextConsumer.WaitSelfCompletedAsync(cancellationToken);
+
+            await this._NextConsumer.WaitRightCompletedAsync(cancellationToken);
+
+        }
+    }
+
+    public override bool SetMonitor(BCMonitor monitor) {
+        var result = base.SetMonitor(monitor);
+        if (result) {
+            monitor.Add(this._NextConsumer);
+        }
+        return result;
     }
 }
