@@ -106,9 +106,24 @@ public abstract class BCProcessorChannelTracking<TIn, TOut, TBCTracking>
         }
     }
 
-    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitCompletedAsync")) {
-            await this._NextConsumer.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
+    /// <summary>
+    /// TODO
+    /// </summary>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public override Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// TODO
+    /// </summary>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+            await this._NextConsumer.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
+            await this._NextConsumer.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -165,9 +180,18 @@ public abstract class BCProcessorChannelTracking<TIn, TOut, TBCTracking>
             return this._NextConsumer.OnNext(value, cancellationToken);
         }
 
-        public async Task WaitCompletedAsync(CancellationToken cancellationToken) {
-            await this._TrackingManager.WaitCompletedAsync(cancellationToken);
-            await this._NextConsumer.WaitCompletedAsync(cancellationToken);
+        public Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+            return Task.CompletedTask;
+        }
+
+        public async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+            using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+                await this._TrackingManager.WaitRightCompletedAsync(cancellationToken);
+                await this._NextConsumer.WaitRightCompletedAsync(cancellationToken);
+
+                await this._TrackingManager.WaitSelfCompletedAsync(cancellationToken);
+                await this._NextConsumer.WaitSelfCompletedAsync(cancellationToken);
+            }
         }
 
         BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;

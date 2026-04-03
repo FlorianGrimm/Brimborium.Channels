@@ -1,5 +1,7 @@
 #pragma warning disable IDE1006 // Naming Styles
 
+using System.Runtime.CompilerServices;
+
 namespace Brimborium.Channels;
 
 public abstract class BCProcessorSynced<TIn, TOut>
@@ -39,10 +41,16 @@ public abstract class BCProcessorSynced<TIn, TOut>
         }
     }
 
-    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
+    public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
         await this._Semaphore.WaitAsync(cancellationToken);
         this._Semaphore.Release();
-        await this.NextConsumer.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+            await this.NextConsumer.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
+            await this.NextConsumer.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
+        }
     }
 
     public override bool SetMonitor(BCMonitor monitor) {
@@ -97,11 +105,20 @@ public abstract class BCProcessorSyncedO2<TIn, TOut1, TOut2>
         }
     }
 
-    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
-        await this._Semaphore.WaitAsync(cancellationToken);
-        this._Semaphore.Release();
-        await this.NextConsumer1.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
-        await this.NextConsumer2.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
+    public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, "WaitSelfCompletedAsync")) {
+            await this._Semaphore.WaitAsync(cancellationToken);
+            this._Semaphore.Release();
+        }
+    }
+    public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+            await this.NextConsumer1.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
+            await this.NextConsumer2.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
+
+            await this.NextConsumer1.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
+            await this.NextConsumer2.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
+        }
     }
 
     public override bool SetMonitor(BCMonitor monitor) {

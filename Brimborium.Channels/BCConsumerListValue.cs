@@ -35,10 +35,12 @@ public sealed class BCConsumerListValue<T>
     }
 
     public Task OnComplete(CancellationToken cancellationToken) {
-        BCLifeTimeExtension.SetCompleting(ref this._LifeTime);
-        BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
-        this._Result.TrySetResult(this._ListTarget);
-        return Task.CompletedTask;
+        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+            BCLifeTimeExtension.SetCompleting(ref this._LifeTime);
+            BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
+            this._Result.TrySetResult(this._ListTarget);
+            return Task.CompletedTask;
+        }
     }
 
     public Task OnError(BCError value, CancellationToken cancellationToken) {
@@ -57,11 +59,25 @@ public sealed class BCConsumerListValue<T>
         return Task.CompletedTask;
     }
 
-    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
-        foreach (var connection in this._ListConnection) {
-            await connection.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
-        }
+    /// <summary>
+    /// TODO
+    /// </summary>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
         await this._Result.Task;
+    }
+
+    /// <summary>
+    /// TODO
+    /// </summary>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+        foreach (var connection in this._ListConnection) {
+            await connection.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
+            await connection.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
+        }
     }
 
     BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;

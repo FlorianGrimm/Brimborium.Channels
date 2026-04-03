@@ -5,6 +5,7 @@ public class BCBufferTests {
     public async Task BCBufferTest001() {
         CancellationTokenSource cts = new();
         CancellationToken cancellationToken = cts.Token;
+        BCMonitor monitor = new();
 
         BCConsumerListValue<string> sink = new(
             new("sink"));
@@ -18,13 +19,17 @@ public class BCBufferTests {
             channel: null,
             next: sink);
         BCSource<int> source = new(new("source"), sut);
-        for (int i = 1; i <= 10_000; i++) {
+        monitor.Add(source);
+
+        int cnt = 10_000;
+        for (int i = 1; i <= cnt; i++) {
             await source.OnNext(i, cancellationToken);
         }
         await source.OnComplete(cancellationToken);
-        await source.WaitCompletedAsync(cancellationToken);
+        await source.WaitSelfCompletedAsync(cancellationToken);
+        await source.WaitRightCompletedAsync(cancellationToken);
         var actual = await sink.GetResultAsync(cancellationToken);
-        await Assert.That(actual).Count().IsEqualTo(10_000);
+        await Assert.That(actual).Count().IsEqualTo(cnt);
     }
 
     [Test]
@@ -47,7 +52,8 @@ public class BCBufferTests {
 
         await source.OnError(new BCError(new Exception("oops")), ct);
         await source.OnComplete(ct);
-        await source.WaitCompletedAsync(ct);
+        await source.WaitSelfCompletedAsync(ct);
+        await source.WaitRightCompletedAsync(ct);
 
         await Assert.That(errorHandled).IsTrue();
         var actual = await sink.GetResultAsync(ct);
@@ -76,7 +82,8 @@ public class BCBufferTests {
         await source.OnNext(1, ct);
         await source.OnNext(2, ct);
         await source.OnComplete(ct);
-        await source.WaitCompletedAsync(ct);
+        await source.WaitSelfCompletedAsync(ct);
+        await source.WaitRightCompletedAsync(ct);
 
         await Assert.That(completeCalled).IsTrue();
         var actual = await sink.GetResultAsync(ct);

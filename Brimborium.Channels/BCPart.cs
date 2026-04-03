@@ -19,7 +19,12 @@ public interface IBCPart {
     /// <summary>
     /// The state switched to Complete.
     /// </summary>
-    Task WaitCompletedAsync(CancellationToken cancellationToken);
+    Task WaitSelfCompletedAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// The state switched to Complete.
+    /// </summary>
+    Task WaitRightCompletedAsync(CancellationToken cancellationToken);
 }
 
 public abstract class BCPart : IBCPart {
@@ -41,7 +46,9 @@ public abstract class BCPart : IBCPart {
         return BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
     }
 
-    public abstract Task WaitCompletedAsync(CancellationToken cancellationToken);
+    public abstract Task WaitSelfCompletedAsync(CancellationToken cancellationToken);
+
+    public abstract Task WaitRightCompletedAsync(CancellationToken cancellationToken);
 }
 
 public abstract class BCPartMonitored

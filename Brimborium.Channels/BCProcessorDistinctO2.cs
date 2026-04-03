@@ -40,5 +40,13 @@ public sealed class BCProcessorDistinctO2<TValue, TKey>
             }
         }
     }
+
+    public override Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+        return Task.CompletedTask;
+    }
+
+    public override Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+        return Task.CompletedTask;
+    }
 }
 

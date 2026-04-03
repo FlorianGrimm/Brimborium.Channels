@@ -29,9 +29,15 @@ public class BCBlock
         return true;
     }
 
-    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
+    public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
         foreach (var outgoing in this.ListOutgoing) {
-            await outgoing.WaitCompletedAsync(cancellationToken);
+            await outgoing.WaitSelfCompletedAsync(cancellationToken);
+        }
+    }
+
+    public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+        foreach (var outgoing in this.ListOutgoing) {
+            await outgoing.WaitRightCompletedAsync(cancellationToken);
         }
     }
 

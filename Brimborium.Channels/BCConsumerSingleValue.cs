@@ -63,11 +63,24 @@ public sealed class BCConsumerSingleValue<T>
         this._ListConnection.Add(connection);
         return Task.CompletedTask;
     }
-
-    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
-        foreach (var connection in this._ListConnection) {
-            await connection.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
-        }
+    /// <summary>
+    /// TODO
+    /// </summary>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
         await this._Result.Task;
+    }
+
+    /// <summary>
+    /// TODO
+    /// </summary>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+        foreach (var connection in this._ListConnection) {
+            await connection.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
+            await connection.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
+        }
     }
 }

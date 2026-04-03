@@ -96,10 +96,15 @@ public sealed class BCOutgoingProducer<T>
         }
     }
 
-    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitCompletedAsync")) {
+    public override Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+        return Task.CompletedTask;
+    }
+
+    public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
             foreach (var connection in this._ListOutgoingConnection) {
-                await connection.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
+                await connection.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
+                await connection.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
             }
         }
     }

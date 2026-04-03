@@ -31,8 +31,15 @@ public abstract class BCProcessorUnsync<TIn, TOut>
         }
     }
 
-    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
-        await this.NextConsumer.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
+    public override Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+        return Task.CompletedTask;
+    }
+
+    public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+            await this.NextConsumer.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
+            await this.NextConsumer.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
+        }
     }
 
     public override bool SetMonitor(BCMonitor monitor) {
@@ -81,9 +88,17 @@ public abstract class BCProcessorUnsyncO2<TIn, TOut1, TOut2>
         }
     }
 
-    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
-        await this.NextConsumer1.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
-        await this.NextConsumer2.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
+    public override Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+        return Task.CompletedTask;
+    }
+
+    public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+            await this.NextConsumer1.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
+            await this.NextConsumer2.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
+            await this.NextConsumer1.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
+            await this.NextConsumer2.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
+        }
     }
 
     public override bool SetMonitor(BCMonitor monitor) {

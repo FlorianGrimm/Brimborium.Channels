@@ -99,9 +99,14 @@ public sealed class BCIncomingConsumer<T>
         }
     }
 
-    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitCompletedAsync")) {
-            await this._NextConsumer.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
+    public override Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+        return Task.CompletedTask;
+    }
+
+    public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+            await this._NextConsumer.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
+            await this._NextConsumer.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 

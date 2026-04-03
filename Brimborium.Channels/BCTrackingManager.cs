@@ -107,7 +107,11 @@ public class BCTrackingManager
         }
     }
 
-    public override Task WaitCompletedAsync(CancellationToken cancellationToken) {
-        return this._Completion.Task;
+    public override Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+        return Task.CompletedTask;
+    }
+
+    public override Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+        return Task.CompletedTask;
     }
 }

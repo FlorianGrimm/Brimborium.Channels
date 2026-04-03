@@ -16,6 +16,7 @@ public sealed class BCBuffer<TIn, TOut>
     private readonly Func<IBCConsumer<TOut>, CancellationToken, Task>? _OnComplete;
     private readonly Channel<TIn> _Channel;
     private Task? _TaskExecution;
+    private readonly SemaphoreSlim _Semaphore = new(1, 1);
 
     /// <summary>
     /// TODO
@@ -50,16 +51,21 @@ public sealed class BCBuffer<TIn, TOut>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     public override async Task OnNext(TIn value, CancellationToken cancellationToken) {
-        try {
-            await this._Channel.Writer.WriteAsync(value, cancellationToken);
+        using (this._Monitor?.LogEnter(this, "OnNext")) {
+            await this._Semaphore.WaitAsync(cancellationToken);
+            try {
+                await this._Channel.Writer.WriteAsync(value, cancellationToken);
 
-            if (this._TaskExecution is null) {
-                this.StartExecution(cancellationToken);
+                if (this._TaskExecution is null) {
+                    this.StartExecution(cancellationToken);
+                }
+            } catch (Exception error) {
+                BCError bcError = new(error);
+                await this.NextConsumer.OnError(bcError, cancellationToken);
+                bcError.ThrowIfNotHandled();
+            } finally {
+                this._Semaphore.Release();
             }
-        } catch (Exception error) {
-            BCError bcError = new(error);
-            await this.NextConsumer.OnError(bcError, cancellationToken);
-            bcError.ThrowIfNotHandled();
         }
     }
 
@@ -70,16 +76,21 @@ public sealed class BCBuffer<TIn, TOut>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     public override async Task OnError(BCError value, CancellationToken cancellationToken) {
-        try {
-            if (this._OnError is { } onError) {
-                await onError(value, this.NextConsumer, cancellationToken).ConfigureAwait(false);
-            } else {
-                await base.OnError(value, cancellationToken).ConfigureAwait(false);
+        using (this._Monitor?.LogEnter(this, "OnError")) {
+            await this._Semaphore.WaitAsync(cancellationToken);
+            try {
+                if (this._OnError is { } onError) {
+                    await onError(value, this.NextConsumer, cancellationToken).ConfigureAwait(false);
+                } else {
+                    await base.OnError(value, cancellationToken).ConfigureAwait(false);
+                }
+            } catch (Exception error) {
+                BCError bcError = new(error);
+                await base.OnError(bcError, cancellationToken).ConfigureAwait(false);
+                bcError.ThrowIfNotHandled();
+            } finally {
+                this._Semaphore.Release();
             }
-        } catch (Exception error) {
-            BCError bcError = new(error);
-            await base.OnError(bcError, cancellationToken).ConfigureAwait(false);
-            bcError.ThrowIfNotHandled();
         }
     }
 
@@ -89,10 +100,17 @@ public sealed class BCBuffer<TIn, TOut>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     public override async Task OnComplete(CancellationToken cancellationToken) {
-        if (this.SetCompleting()) {
-            this._Channel.Writer.Complete(default);
-            if (this._TaskExecution is null) {
-                this.StartExecution(cancellationToken);
+        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+            await this._Semaphore.WaitAsync(cancellationToken);
+            try {
+                if (this.SetCompleting()) {
+                    this._Channel.Writer.Complete(default);
+                    if (this._TaskExecution is null) {
+                        this.StartExecution(cancellationToken);
+                    }
+                }
+            } finally {
+                this._Semaphore.Release();
             }
         }
     }
@@ -102,61 +120,90 @@ public sealed class BCBuffer<TIn, TOut>
     /// </summary>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "Channel Completion")) {
-            await this._Channel.Reader.Completion.ConfigureAwait(false);
-        }
+    public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, "WaitSelfCompletedAsync")) {
+            await this._Semaphore.WaitAsync(cancellationToken);
+            try {
+                this.StartExecution(cancellationToken);
+            } finally {
+                this._Semaphore.Release();
+            }
+            using (this._Monitor?.LogEnter(this, "Channel Completion")) {
+                await this._Channel.Reader.Completion.ConfigureAwait(false);
+            }
 
-        if (this._TaskExecution is { } taskExecution) {
             using (this._Monitor?.LogEnter(this, "Channel Execution Loop")) {
-                await taskExecution.ConfigureAwait(false);
+                if (this._TaskExecution is { } taskExecution) {
+                    await taskExecution.WaitAsync(cancellationToken);
+                }
+                await this._Completion.Task.ConfigureAwait(false);
             }
         }
+    }
 
-        await this.NextConsumer.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
+    /// <summary>
+    /// TODO
+    /// </summary>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+            await this.NextConsumer.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
+            await this.NextConsumer.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
+        }
     }
 
     private void StartExecution(CancellationToken cancellationToken) {
         if (this._TaskExecution is null) {
             lock (this) {
                 if (this._TaskExecution is null) {
-                    Task.Run(async () => {
-                        try {
-                            var task = this.ExecutionAsync(cancellationToken);
-                            this._TaskExecution = task;
-                            await task;
-                        } catch (Exception ex) {
-                            BCError error = new(ex);
-                            await this.OnError(error, cancellationToken);
-                            error.ThrowIfNotHandled();
-                        } finally {
-                            this._TaskExecution = null;
-                        }
-                    }, cancellationToken);
+                    this._TaskExecution = StartExecutionAsync(cancellationToken);
                 }
             }
+        }
+
+        async Task StartExecutionAsync(CancellationToken cancellation) {
+            try {
+                var task = this.ExecutionAsync(cancellationToken);
+                this._TaskExecution = task;
+                await task;
+            } catch (Exception ex) {
+                BCError error = new(ex);
+                await this.OnError(error, cancellationToken);
+                error.ThrowIfNotHandled();
+            }
+
         }
     }
 
+    private TaskCompletionSource _Completion = new();
     private async Task ExecutionAsync(CancellationToken cancellationToken) {
-        var reader = this._Channel.Reader;
-        while (await reader.WaitToReadAsync(cancellationToken)) {
-            while (reader.TryRead(out var valueTIn)) {
-                try {
-                    await this._OnNext(valueTIn, this.NextConsumer, cancellationToken);
-                } catch (Exception error) {
-                    BCError bcError = new(error);
-                    await this.NextConsumer.OnError(bcError, cancellationToken);
-                    bcError.ThrowIfNotHandled();
+        using (this._Monitor?.LogEnter(this, "ExecutionLoop")) {
+            try {
+                var reader = this._Channel.Reader;
+                while (await reader.WaitToReadAsync(cancellationToken)) {
+                    while (reader.TryRead(out var valueTIn)) {
+                        try {
+                            await this._OnNext(valueTIn, this.NextConsumer, cancellationToken);
+                        } catch (Exception error) {
+                            BCError bcError = new(error);
+                            await this.NextConsumer.OnError(bcError, cancellationToken);
+                            bcError.ThrowIfNotHandled();
+                        }
+                    }
                 }
-            }
-        }
-        if (this.SetCompleted()) {
-            if (this._OnComplete is { } onComplete) {
-                await onComplete(this.NextConsumer, cancellationToken);
-            }
+                if (this.SetCompleted()) {
+                    if (this._OnComplete is { } onComplete) {
+                        await onComplete(this.NextConsumer, cancellationToken);
+                    }
 
-            await this.NextConsumer.OnComplete(cancellationToken).ConfigureAwait(false);
+                    await this.NextConsumer.OnComplete(cancellationToken).ConfigureAwait(false);
+
+                    this._Completion.TrySetResult();
+                }
+            } catch (Exception ex) {
+                this._Completion.TrySetException(ex);
+            }
         }
     }
 }

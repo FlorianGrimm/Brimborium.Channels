@@ -25,11 +25,11 @@ public class BCMonitor {
     //}
 
     public void Log(IBCPart part, string name, string kind) {
-        System.Console.WriteLine($"{part.GetType().Name}.{name}:{kind}");
+        System.Console.WriteLine($"{part.Description.Name}.{name}:{kind}");
     }
 
     internal void LogAwait(IBCPart part, string name) {
-        System.Console.WriteLine($"{part.GetType().Name}.{name}:await");
+        System.Console.WriteLine($"{part.Description.Name}.{name}:await");
     }
 }
 

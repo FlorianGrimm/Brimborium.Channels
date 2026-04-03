@@ -86,16 +86,23 @@ public class BCTracking<TIn, TOut>
 
     private TaskCompletionSource? _Completion;
 
-    public override Task WaitCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+    public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, "WaitSelfCompletedAsync")) {
             if (this._Completion is { } completion) {
-                return completion.Task;
+                await completion.Task;
             }
             if (BCLifeTime.Completed == this._LifeTime) {
-                return Task.CompletedTask;
+                return;
             }
+            this._Completion = new TaskCompletionSource();
+            await this._Completion.Task;
+        }
+    }
 
-            return (this._Completion = new TaskCompletionSource()).Task;
+    public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+            await this._NextConsumer.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
+            await this._NextConsumer.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 

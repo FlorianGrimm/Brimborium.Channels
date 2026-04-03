@@ -18,10 +18,10 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
     where TBCTracking : BCTracking<TIn, TOut> {
     //protected readonly Func<BCDescription, TIn, IBCTrackingManager, IBCConsumer<TOut>, TBCTracking> _CreateRequest;
     //private readonly Func<TBCTracking, CancellationToken, Task> _SendRequest;
-    protected readonly BCDescription _NextDescription;
-    protected readonly IBCConsumer<TOut> _NextConsumer;
-    protected readonly BCProcessorTrackingNext _TrackingNext;
-    protected readonly BCTrackingManager _TrackingManager;
+    protected readonly BCDescription NextDescription;
+    protected readonly IBCConsumer<TOut> NextConsumer;
+    protected readonly BCProcessorTrackingNext TrackingNext;
+    protected readonly BCTrackingManager TrackingManager;
 
     /// <summary>
     /// TODO
@@ -45,19 +45,19 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
         ){
         //this._CreateRequest = createRequest;
         //this._SendRequest = sendRequest;
-        this._NextDescription = new BCDescription($"{description.Name}-Next");
-        this._NextConsumer = nextConsumer;
+        this.NextDescription = new BCDescription($"{description.Name}-Next");
+        this.NextConsumer = nextConsumer;
         BCTrackingManager trackingManager = new(
             description: new BCDescription($"{description.Name}-Tracking"),
             nextConsumer: nextConsumer
             );
-        this._TrackingManager = trackingManager;
+        this.TrackingManager = trackingManager;
         BCProcessorTrackingNext processorTrackingNext = new(
-            description: this._NextDescription,
+            description: this.NextDescription,
             trackingManager: trackingManager,
             nextConsumer: nextConsumer
             );
-        this._TrackingNext = processorTrackingNext;
+        this.TrackingNext = processorTrackingNext;
     }
 
     /// <summary>
@@ -100,17 +100,17 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
                     //this._TrackingManager,
                     //this._TrackingNext
                     );
-                this._TrackingManager.Add(tracking);
+                this.TrackingManager.Add(tracking);
                 await this.SendRequest(tracking, cancellationToken);
             } catch (Exception error) {
                 BCError bcError = new(error);
-                await this._NextConsumer.OnError(bcError, cancellationToken);
+                await this.NextConsumer.OnError(bcError, cancellationToken);
                 bcError.ThrowIfNotHandled();
             }
         }
     }
     public virtual async Task OnError(BCError value, CancellationToken cancellationToken) {
-        await this._NextConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
+        await this.NextConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -122,23 +122,28 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
         using (this._Monitor?.LogEnter(this, "OnComplete")) {
             if (this.SetCompleting()) {
                 if (this.SetCompleted()) {
-                    await this._TrackingNext.OnComplete(cancellationToken);
-                    await this._NextConsumer.OnComplete(cancellationToken);
+                    await this.TrackingNext.OnComplete(cancellationToken);
+                    await this.NextConsumer.OnComplete(cancellationToken);
                 }
             }
         }
     }
 
-    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitCompletedAsync")) {
-            await this._NextConsumer.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
+    public override Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+        return Task.CompletedTask;
+    }
+
+    public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+            await this.NextConsumer.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
+            await this.NextConsumer.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
     public override bool SetMonitor(BCMonitor monitor) {
         var result = base.SetMonitor(monitor);
         if (result) {
-            monitor.Add(this._NextConsumer);
+            monitor.Add(this.NextConsumer);
         }
         return true;
     }
@@ -188,9 +193,17 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
             return this._NextConsumer.OnNext(value, cancellationToken);
         }
 
-        public async Task WaitCompletedAsync(CancellationToken cancellationToken) {
-            await this._TrackingManager.WaitCompletedAsync(cancellationToken);
-            await this._NextConsumer.WaitCompletedAsync(cancellationToken);
+        public Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+            return Task.CompletedTask;
+        }
+
+        public async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+            using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+                await this._TrackingManager.WaitRightCompletedAsync(cancellationToken);
+                await this._NextConsumer.WaitRightCompletedAsync(cancellationToken);
+                await this._TrackingManager.WaitSelfCompletedAsync(cancellationToken);
+                await this._NextConsumer.WaitSelfCompletedAsync(cancellationToken);
+            }
         }
 
         BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
