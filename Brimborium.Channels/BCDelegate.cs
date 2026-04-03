@@ -10,7 +10,7 @@ public sealed class BCDelegate<TIn, TOut>
     private readonly Func<IBCConsumer<TOut>, CancellationToken, Task>? _OnComplete;
 
     public BCDelegate(
-            BCDescription? description,
+            BCDescription description,
             Func<TIn, IBCConsumer<TOut>, CancellationToken, Task> onNext,
             Func<BCError, IBCConsumer<TOut>, CancellationToken, Task>? onError,
             Func<IBCConsumer<TOut>, CancellationToken, Task>? onComplete,
@@ -19,7 +19,6 @@ public sealed class BCDelegate<TIn, TOut>
             description,
             next
         ) {
-        this.Description = description ?? new();
         this._onNext = onNext;
         this._OnError = onError;
         this._OnComplete = onComplete;

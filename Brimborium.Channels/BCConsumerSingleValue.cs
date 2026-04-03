@@ -7,34 +7,22 @@ namespace Brimborium.Channels;
 /// </summary>
 /// <typeparam name="T">TODO</typeparam>
 public sealed class BCConsumerSingleValue<T> 
-    : IBCConsumerSubscribable<T>
-    , IBCMonitored {
+    : BCPartMonitored
+    , IBCConsumerSubscribable<T> {
     private readonly TaskCompletionSource<T?> _Result = new();
     private readonly List<IBCConnection<T>> _ListConnection = new();
     private T _Value = default!;
     private bool _HasValue;
-    private BCLifeTime _LifeTime;
     private Exception? _Error;
-    private BCMonitor? _Monitor;
-
-    /// <summary>
-    /// TODO
-    /// </summary>
-    public BCLifeTime LifeTime => this._LifeTime;
-
-    /// <summary>
-    /// TODO
-    /// </summary>
-    public BCDescription Description { get; set; }
-
     /// <summary>
     /// TODO
     /// </summary>
     /// <param name="description"></param>
     public BCConsumerSingleValue(
-        BCDescription? description
-    ) {
-        this.Description = description ?? new();
+            BCDescription description
+        ) : base(
+            description
+        ) {
     }
 
     /// <summary>
@@ -76,18 +64,10 @@ public sealed class BCConsumerSingleValue<T>
         return Task.CompletedTask;
     }
 
-    public async Task WaitCompletedAsync(CancellationToken cancellationToken) {
+    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
         foreach (var connection in this._ListConnection) {
             await connection.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
         }
         await this._Result.Task;
-    }
-
-    BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-    public bool SetMonitor(BCMonitor monitor) {
-        if (this._Monitor is { }) { return false; }
-        this._Monitor = monitor;
-        // no next consumer
-        return true;
     }
 }

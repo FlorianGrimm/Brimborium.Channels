@@ -13,7 +13,7 @@ public sealed class BCProcessorDistinctO1<TValue, TKey>
     private readonly ConcurrentDictionary<TKey, TKey> _SeenBefore;
     
     public BCProcessorDistinctO1(
-        BCDescription? description,
+        BCDescription description,
         Func<TValue, TKey> getKey,
         IEqualityComparer<TKey> keyEqualityComparer,
         IBCConsumer<BCDistinctValue<TValue>> next

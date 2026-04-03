@@ -4,33 +4,25 @@ namespace Brimborium.Channels;
 /// TODO
 /// </summary>
 /// <typeparam name="T">TODO</typeparam>
-public sealed class BCConsumerListValue<T> 
-    : IBCConsumerSubscribable<T> 
-    , IBCMonitored{
-    private TaskCompletionSource<List<T>> _Result = new();
+public sealed class BCConsumerListValue<T>
+    : BCPartMonitored
+    , IBCConsumerSubscribable<T>
+    , IBCMonitored {
+    private readonly TaskCompletionSource<List<T>> _Result = new();
     private readonly List<IBCConnection<T>> _ListConnection = new();
-    private readonly List<T> _ListTarget = new();
-    private BCMonitor? _Monitor;
-    private BCLifeTime _LifeTime;
-
-    /// <summary>
-    /// TODO
-    /// </summary>
-    public BCLifeTime LifeTime => this._LifeTime;
-
-    /// <summary>
-    /// TODO
-    /// </summary>
-    public BCDescription Description { get;  set; }
+    private readonly List<T> _ListTarget;
 
     /// <summary>
     /// TODO
     /// </summary>
     /// <param name="description">TODO</param>
     public BCConsumerListValue(
-        BCDescription? description
-    ) {
-        this.Description=description??new();
+            BCDescription description,
+            List<T>? listTarget = null
+        ) : base(
+            description
+        ) {
+        this._ListTarget = listTarget ?? new();
     }
 
     /// <summary>
@@ -65,7 +57,7 @@ public sealed class BCConsumerListValue<T>
         return Task.CompletedTask;
     }
 
-    public async Task WaitCompletedAsync(CancellationToken cancellationToken) {
+    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
         foreach (var connection in this._ListConnection) {
             await connection.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -73,7 +65,7 @@ public sealed class BCConsumerListValue<T>
     }
 
     BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-    public bool SetMonitor(BCMonitor monitor) {
+    public override bool SetMonitor(BCMonitor monitor) {
         if (this._Monitor is { }) { return false; }
         this._Monitor = monitor;
         // no next consumer

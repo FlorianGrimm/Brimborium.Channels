@@ -15,7 +15,7 @@ public class BCBlockI1O2Tests {
         BCBlockI1O2<int, int, int> block = BCBlockI1O2<int, int, int>.Create(
             null,
             (out1, out2) => new BCProcessorDistinctO2<int, int>(
-                null,
+                new BCDescription("1"),
                 v => v,
                 EqualityComparer<int>.Default,
                 out1,
@@ -47,7 +47,7 @@ public class BCBlockI1O2Tests {
         BCBlockI1O2<int, int, int> block = BCBlockI1O2<int, int, int>.Create(
             null,
             (out1, out2) => new BCProcessorDistinctO2<int, int>(
-                null,
+                new BCDescription("1"),
                 v => v,
                 EqualityComparer<int>.Default,
                 out1,
@@ -120,11 +120,11 @@ public class BCBlockI2O1Tests {
         BCBlockI2O1<int, int, int> block = BCBlockI2O1<int, int, int>.Create(
             null,
             (out1) => new BCDelegate<int, int>(
-                null,
+                new BCDescription("1"),
                 async (v, next, ct) => await next.OnNext(v, ct),
                 null, null, out1),
             (out1) => new BCDelegate<int, int>(
-                null,
+                new BCDescription("2"),
                 async (v, next, ct) => await next.OnNext(v, ct),
                 null, null, out1));
 

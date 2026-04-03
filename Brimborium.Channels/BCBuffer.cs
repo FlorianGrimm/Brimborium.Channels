@@ -27,7 +27,7 @@ public sealed class BCBuffer<TIn, TOut>
     /// <param name="channel">TODO</param>
     /// <param name="next">TODO</param>
     public BCBuffer(
-            BCDescription? description,
+            BCDescription description,
             Func<TIn, IBCConsumer<TOut>, CancellationToken, Task> onNext,
             Func<BCError, IBCConsumer<TOut>, CancellationToken, Task>? onError,
             Func<IBCConsumer<TOut>, CancellationToken, Task>? onComplete,
@@ -94,18 +94,6 @@ public sealed class BCBuffer<TIn, TOut>
             if (this._TaskExecution is null) {
                 this.StartExecution(cancellationToken);
             }
-            /*
-            if (this._TaskExecution is { } taskExecution) {
-                await taskExecution;
-            } else {
-                if (this._OnComplete is { } onComplete) {
-                    await onComplete(this.NextConsumer, cancellationToken);
-                }
-            }
-            if (this.SetCompleted()) { 
-                await this.NextConsumer.OnComplete(cancellationToken).ConfigureAwait(false);
-            }
-            */
         }
     }
 
@@ -169,9 +157,6 @@ public sealed class BCBuffer<TIn, TOut>
             }
 
             await this.NextConsumer.OnComplete(cancellationToken).ConfigureAwait(false);
-
-            //await this.NextConsumer.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
         }
-
     }
 }

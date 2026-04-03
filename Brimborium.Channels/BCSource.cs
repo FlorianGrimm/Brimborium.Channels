@@ -3,24 +3,19 @@
 namespace Brimborium.Channels;
 
 public sealed class BCSource<T>
-    : IBCProducer
-    , IBCConsumer<T>
-    , IBCMonitored {
+    : BCPartMonitored
+    , IBCProducer
+    , IBCConsumer<T> {
     private readonly IBCConsumer<T> _NextConsumer;
-    private BCLifeTime _LifeTime;
-    private BCMonitor? _Monitor;
-
-    public BCDescription Description { get; set; }
 
     public BCSource(
-        BCDescription? description,
-        IBCConsumer<T> nextConsumer
+            BCDescription description,
+            IBCConsumer<T> nextConsumer
+        ) : base(
+            description
         ) {
-        this.Description = description ?? new();
         this._NextConsumer = nextConsumer;
     }
-
-    public BCLifeTime LifeTime => this._LifeTime;
 
     public async Task OnComplete(CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, "OnComplete")) {
@@ -43,15 +38,15 @@ public sealed class BCSource<T>
         }
     }
 
-    public async Task WaitCompletedAsync(CancellationToken cancellationToken) {
+    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
         await this._NextConsumer.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-    public bool SetMonitor(BCMonitor monitor) {
-        if (this._Monitor is { }) { return false; }
-        this._Monitor = monitor;
-        monitor.Add(this._NextConsumer);
+    public override bool SetMonitor(BCMonitor monitor) {
+        var result = base.SetMonitor(monitor);
+        if (result) {
+            monitor.Add(this._NextConsumer);
+        }
         return true;
     }
 }

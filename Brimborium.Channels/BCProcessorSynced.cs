@@ -3,21 +3,17 @@
 namespace Brimborium.Channels;
 
 public abstract class BCProcessorSynced<TIn, TOut>
-    : IBCConsumer<TIn>
-    , IBCMonitored {
-    private BCLifeTime _LifeTime;
-    private BCMonitor? _Monitor;
+    : BCPartMonitored
+    , IBCConsumer<TIn> {
     protected readonly IBCConsumer<TOut> NextConsumer;
     protected readonly SemaphoreSlim _Semaphore = new(1, 1);
 
-    public BCLifeTime LifeTime => this._LifeTime;
-    public BCDescription Description { get; set; }
-
     public BCProcessorSynced(
-        BCDescription? description,
-        IBCConsumer<TOut> next
-    ) {
-        this.Description = description ?? new();
+            BCDescription description,
+            IBCConsumer<TOut> next
+        ) : base(
+            description
+        ) {
         this.NextConsumer = next;
     }
 
@@ -43,22 +39,13 @@ public abstract class BCProcessorSynced<TIn, TOut>
         }
     }
 
-    public virtual async Task WaitCompletedAsync(CancellationToken cancellationToken) {
+    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
         await this._Semaphore.WaitAsync(cancellationToken);
         this._Semaphore.Release();
         await this.NextConsumer.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    protected bool SetCompleting() {
-        return BCLifeTimeExtension.SetCompleting(ref this._LifeTime);
-    }
-
-    protected bool SetCompleted() {
-        return BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
-    }
-
-    BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-    public virtual bool SetMonitor(BCMonitor monitor) {
+    public override bool SetMonitor(BCMonitor monitor) {
         if (this._Monitor is { }) { return false; }
         this._Monitor = monitor;
         monitor.Add(this.NextConsumer);
@@ -69,23 +56,19 @@ public abstract class BCProcessorSynced<TIn, TOut>
 
 
 public abstract class BCProcessorSyncedO2<TIn, TOut1, TOut2>
-    : IBCConsumer<TIn>
-    , IBCMonitored{
-    private BCLifeTime _LifeTime;
-    protected BCMonitor? _Monitor;
+    : BCPartMonitored
+    , IBCConsumer<TIn> {
     protected readonly IBCConsumer<TOut1> NextConsumer1;
     protected readonly IBCConsumer<TOut2> NextConsumer2;
     protected readonly SemaphoreSlim _Semaphore = new(1, 1);
 
-    public BCLifeTime LifeTime => this._LifeTime;
-    public BCDescription Description { get; set; }
-
     public BCProcessorSyncedO2(
-        BCDescription? description,
-        IBCConsumer<TOut1> nextConsumer1,
-        IBCConsumer<TOut2> nextConsumer2
-    ) {
-        this.Description = description ?? new();
+            BCDescription description,
+            IBCConsumer<TOut1> nextConsumer1,
+            IBCConsumer<TOut2> nextConsumer2
+        ) : base(
+            description
+        ) {
         this.NextConsumer1 = nextConsumer1;
         this.NextConsumer2 = nextConsumer2;
     }
@@ -114,27 +97,19 @@ public abstract class BCProcessorSyncedO2<TIn, TOut1, TOut2>
         }
     }
 
-    public virtual async Task WaitCompletedAsync(CancellationToken cancellationToken) {
+    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
         await this._Semaphore.WaitAsync(cancellationToken);
         this._Semaphore.Release();
         await this.NextConsumer1.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
         await this.NextConsumer2.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    protected bool SetCompleting() {
-        return BCLifeTimeExtension.SetCompleting(ref this._LifeTime);
-    }
-
-    protected bool SetCompleted() {
-        return BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
-    }
-
-    BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-    public virtual bool SetMonitor(BCMonitor monitor) {
-        if (this._Monitor is { }) { return false; }
-        this._Monitor = monitor;
-        monitor.Add(this.NextConsumer1);
-        monitor.Add(this.NextConsumer2);
+    public override bool SetMonitor(BCMonitor monitor) {
+        var result = base.SetMonitor(monitor);
+        if (result) {
+            monitor.Add(this.NextConsumer1);
+            monitor.Add(this.NextConsumer2);
+        }
         return true;
     }
 }

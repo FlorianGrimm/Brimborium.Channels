@@ -3,25 +3,21 @@
 namespace Brimborium.Channels;
 
 public sealed class BCIncomingConsumer<T>
-    : IBCConsumerSubscribable<T>
-    , IBCMonitored {
-    private BCLifeTime _LifeTime;
+    : BCPartMonitored
+    , IBCConsumerSubscribable<T> {
     private readonly SemaphoreSlim _Semaphore = new(1, 1);
     private IBCConnection<T>[] _ListIncomingConnection = [];
-    private BCMonitor? _Monitor;
-    private readonly IBCConsumer<T> _Consumer;
+    private readonly IBCConsumer<T> _NextConsumer;
     private readonly BCBlock _Owner;
 
-    public BCLifeTime LifeTime => this._LifeTime;
-
-    public BCDescription Description { get; set; }
-
     public BCIncomingConsumer(
-        BCDescription? description,
-        IBCConsumer<T> consumer,
-        BCBlock owner) {
-        this.Description = description ?? new();
-        this._Consumer = consumer;
+            BCDescription description,
+            IBCConsumer<T> nextConsumer,
+            BCBlock owner
+        ) : base(
+            description
+        ) {
+        this._NextConsumer = nextConsumer;
         this._Owner = owner;
     }
 
@@ -56,7 +52,7 @@ public sealed class BCIncomingConsumer<T>
         using (this._Monitor?.LogEnter(this, "OnNext")) {
             await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
-                await this._Consumer.OnNext(value, cancellationToken).ConfigureAwait(false);
+                await this._NextConsumer.OnNext(value, cancellationToken).ConfigureAwait(false);
             } finally {
                 this._Semaphore.Release();
             }
@@ -67,7 +63,7 @@ public sealed class BCIncomingConsumer<T>
         using (this._Monitor?.LogEnter(this, "OnError")) {
             await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
-                await this._Consumer.OnError(value, cancellationToken).ConfigureAwait(false);
+                await this._NextConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
             } finally {
                 this._Semaphore.Release();
             }
@@ -94,7 +90,7 @@ public sealed class BCIncomingConsumer<T>
                     BCLifeTimeExtension.SetCompleting(ref this._LifeTime);
                     if (BCLifeTimeExtension.SetCompleted(ref this._LifeTime)) {
                         this._Owner.SetCompleted();
-                        await this._Consumer.OnComplete(cancellationToken).ConfigureAwait(false);
+                        await this._NextConsumer.OnComplete(cancellationToken).ConfigureAwait(false);
                     }
                 }
             } finally {
@@ -103,17 +99,17 @@ public sealed class BCIncomingConsumer<T>
         }
     }
 
-    public async Task WaitCompletedAsync(CancellationToken cancellationToken) {
+    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, "WaitCompletedAsync")) {
-            await this._Consumer.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
+            await this._NextConsumer.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
-    BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-    public bool SetMonitor(BCMonitor monitor) {
-        if (this._Monitor is { }) { return false; }
-        this._Monitor = monitor;
-        monitor.Add(this._Consumer);
+    public override bool SetMonitor(BCMonitor monitor) {
+        var result = base.SetMonitor(monitor);
+        if (result) {
+            monitor.Add(this._NextConsumer);
+        }
         return true;
     }
 }

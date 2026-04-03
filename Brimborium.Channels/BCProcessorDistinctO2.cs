@@ -11,7 +11,7 @@ public sealed class BCProcessorDistinctO2<TValue, TKey>
     private readonly Func<TValue, TKey> _GetKey;
 
     public BCProcessorDistinctO2(
-            BCDescription? description,
+            BCDescription description,
             Func<TValue, TKey> getKey,
             IEqualityComparer<TKey> keyEqualityComparer,
             IBCConsumer<TValue> nextConsumer1,

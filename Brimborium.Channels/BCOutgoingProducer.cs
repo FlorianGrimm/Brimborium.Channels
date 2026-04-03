@@ -7,25 +7,21 @@ namespace Brimborium.Channels;
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public sealed class BCOutgoingProducer<T> 
-    : IBCConsumer<T>, IBCProducer<T>
-    , IBCMonitored {
-    private BCLifeTime _LifeTime;
+    : BCPartMonitored
+    , IBCConsumer<T>, IBCProducer<T> {
     private readonly SemaphoreSlim _Semaphore = new(1, 1);
     private IBCConnection<T>[] _ListOutgoingConnection = [];
-    private BCMonitor? _Monitor;
-
-    public BCLifeTime LifeTime => this._LifeTime;
-    public BCDescription Description { get; set; }
-
+    
     public BCOutgoingProducer(
-        BCDescription? description
-    ) {
-        this.Description = description ?? new();
+            BCDescription description
+        ) : base(
+            description
+        ) {
     }
 
     public async Task<IBCConnection<T>> Subscribe(IBCConsumerSubscribable<T> next, CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, "Subscribe")) {
-            var connection = new BCConnection<T>(this, next);
+            var connection = new BCConnection<T>(this.Description, this, next);
             await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
                 var oldValue = this._ListOutgoingConnection;
@@ -100,7 +96,7 @@ public sealed class BCOutgoingProducer<T>
         }
     }
 
-    public async Task WaitCompletedAsync(CancellationToken cancellationToken) {
+    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, "WaitCompletedAsync")) {
             foreach (var connection in this._ListOutgoingConnection) {
                 await connection.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
@@ -108,12 +104,12 @@ public sealed class BCOutgoingProducer<T>
         }
     }
 
-    BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-    public bool SetMonitor(BCMonitor monitor) {
-        if (this._Monitor is { }) { return false; }
-        this._Monitor = monitor;
-        foreach (var consumer in this._ListOutgoingConnection) {
-            monitor.Add(consumer);
+    public override bool SetMonitor(BCMonitor monitor) {
+        var result = base.SetMonitor(monitor);
+        if (result) {
+            foreach (var consumer in this._ListOutgoingConnection) {
+                monitor.Add(consumer);
+            }
         }
         return true;
     }

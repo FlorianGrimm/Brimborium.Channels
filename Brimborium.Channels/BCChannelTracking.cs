@@ -1,5 +1,5 @@
 #pragma warning disable IDE1006 // Naming Styles
-
+#if false
 using System.Collections.Concurrent;
 using System.Threading.Channels;
 
@@ -15,6 +15,8 @@ public sealed class BCChannelTracking<TIn, TOut>
     , IBCMonitored {
     private readonly Channel<BCTracking<TIn, TOut>> _Channel;
     private readonly BCChannelTrackingNext _ChannelTrackingNext;
+    private readonly BCDescription _NextDescription;
+    private readonly BCTrackingManager _TrackingManager;
 
     /// <summary>
     /// TODO
@@ -23,19 +25,21 @@ public sealed class BCChannelTracking<TIn, TOut>
     /// <param name="channel">TODO</param>
     /// <param name="next">TODO</param>
     public BCChannelTracking(
-            BCDescription? description,
+            BCDescription description,
             Channel<BCTracking<TIn, TOut>>? channel,
             IBCConsumer<TOut> next
         ) : this(
             description: description,
             channel: channel,
-            channelTrackingNext: new(
-                next)
+            channelTrackingNext: 
+                new(
+                    description: new BCDescription($"{description.Name}-next"),
+                    next: next)
         ) {
     }
 
     private BCChannelTracking(
-            BCDescription? description,
+            BCDescription description,
             Channel<BCTracking<TIn, TOut>>? channel,
             BCChannelTrackingNext channelTrackingNext
         ) : base(
@@ -44,12 +48,20 @@ public sealed class BCChannelTracking<TIn, TOut>
         ) {
         this._Channel = channel ?? System.Threading.Channels.Channel.CreateUnbounded<BCTracking<TIn, TOut>>();
         this._ChannelTrackingNext = channelTrackingNext;
+        this._NextDescription = new BCDescription($"{description.Name}-Next");
+        this._TrackingManager = new(
+            new BCDescription("tracking"),
+            channelTrackingNext);
     }
 
     public override async Task OnNext(TIn value, CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, "OnNext")) {
             try {
-                var tracking = new BCTracking<TIn, TOut>(value, this._ChannelTrackingNext, this._ChannelTrackingNext);
+                var tracking = new BCTracking<TIn, TOut>(
+                    this._NextDescription,
+                    value, 
+                    this._ChannelTrackingNext, 
+                    this._ChannelTrackingNext);
                 this._ChannelTrackingNext.AddTracking(tracking);
                 await this._Channel.Writer.WriteAsync(
                     tracking,
@@ -92,12 +104,16 @@ public sealed class BCChannelTracking<TIn, TOut>
         private BCLifeTime _LifeTime;
 
         public BCChannelTrackingNext(
+            BCDescription description,
             IBCConsumer<TOut> next
         ) {
+            this.Description = description;
             this._Next = next;
         }
 
         public BCLifeTime LifeTime => this._LifeTime;
+
+        public BCDescription Description { get; }
 
         public void AddTracking(BCTracking<TIn, TOut> tracking) {
             _ = this._Tracking.TryAdd(tracking.Id, tracking);
@@ -139,110 +155,11 @@ public sealed class BCChannelTracking<TIn, TOut>
             return this._Next.OnNext(value, cancellationToken);
         }
 
-        public async Task WaitCompletedAsync(CancellationToken cancellationToken) {
+        public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
             await this._Completion.Task;
             await this._Next.WaitCompletedAsync(cancellationToken);
 
         }
     }
 }
-
-/// <summary>
-/// TODO
-/// </summary>
-/// <typeparam name="TIn">TODO</typeparam>
-/// <typeparam name="TOut">TODO</typeparam>
-public interface IBCTrackingManager<TIn, TOut> {
-    Task OnTrackingComplete(BCTracking<TIn, TOut> tracking, CancellationToken cancellationToken);
-    Task OnTrackingError(BCTracking<TIn, TOut> tracking, BCError value, CancellationToken cancellationToken);
-}
-
-/// <summary>
-/// TODO
-/// </summary>
-/// <typeparam name="TIn">TODO</typeparam>
-/// <typeparam name="TOut">TODO</typeparam>
-public class BCTracking<TIn, TOut> 
-    : IBCConsumer<TOut>
-    , IBCMonitored {
-    private static long _NextId;
-    internal readonly long Id;
-    private BCLifeTime _LifeTime;
-    protected readonly IBCTrackingManager<TIn, TOut> _TrackingManager;
-    private readonly IBCConsumer<TOut> _NextConsumer;
-
-    /// <summary>
-    /// TODO
-    /// </summary>
-    /// <param name="Value"></param>
-    /// <param name="TrackingManager"></param>
-    /// <param name="nextConsumer"></param>
-    public BCTracking(
-        TIn Value,
-        IBCTrackingManager<TIn, TOut> TrackingManager,
-        IBCConsumer<TOut> nextConsumer
-        ) {
-        this.Value = Value;
-        this._TrackingManager = TrackingManager;
-        this._NextConsumer = nextConsumer;
-        this.Id = System.Threading.Interlocked.Increment(ref _NextId);
-    }
-
-    /// <summary>
-    /// TODO
-    /// </summary>
-    public BCLifeTime LifeTime => this._LifeTime;
-
-    /// <summary>
-    /// TODO
-    /// </summary>
-    public TIn Value { get; }
-
-    public async Task OnComplete(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
-            if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
-                BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
-                await this._TrackingManager.OnTrackingComplete(this, cancellationToken);
-                if (this._Completion is { } completion) {
-                    completion.SetResult();
-                }
-            }
-        }
-    }
-
-    public async Task OnError(BCError value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
-            await this._TrackingManager.OnTrackingError(this, value, cancellationToken);
-        }
-    }
-
-    private TaskCompletionSource? _Completion;
-    private BCMonitor? _Monitor;
-
-    public Task WaitCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
-            if (this._Completion is { } completion) {
-                return completion.Task;
-            }
-            if (BCLifeTime.Completed == this._LifeTime) {
-                return Task.CompletedTask;
-            }
-
-            return (this._Completion = new TaskCompletionSource()).Task;
-        }
-    }
-
-    public async Task OnNext(TOut value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
-            await this._NextConsumer.OnNext(value, cancellationToken);
-        }
-    }
-
-    BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-    public bool SetMonitor(BCMonitor monitor) {
-        if (this._Monitor is { }) { return false; }
-        this._Monitor = monitor;
-        monitor.Add(this._NextConsumer);
-        return true;
-    }
-}
+#endif

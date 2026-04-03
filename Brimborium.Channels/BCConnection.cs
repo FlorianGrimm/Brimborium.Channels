@@ -7,15 +7,8 @@ namespace Brimborium.Channels;
 /// </summary>
 /// <typeparam name="T">TODO</typeparam>
 public sealed class BCConnection<T>
-    : IBCConnection<T>
-    , IBCMonitored {
-    private BCLifeTime _LifeTime;
-    private BCMonitor? _Monitor;
-
-    /// <summary>
-    /// TODO
-    /// </summary>
-    public BCLifeTime LifeTime => this._LifeTime;
+    :BCPartMonitored
+    , IBCConnection<T> {
 
     /// <summary>
     /// TODO
@@ -32,7 +25,13 @@ public sealed class BCConnection<T>
     /// </summary>
     /// <param name="outgoingProducer">TODO</param>
     /// <param name="incomingConsumer">TODO</param>
-    public BCConnection(IBCProducer<T> outgoingProducer, IBCConsumer<T> incomingConsumer) {
+    public BCConnection(
+            BCDescription description,
+            IBCProducer<T> outgoingProducer,
+            IBCConsumer<T> incomingConsumer
+        ): base(
+            description
+        ) {
         this.LeftOutgoingProducer = outgoingProducer;
         this.RightIncomingConsumer = incomingConsumer;
     }
@@ -58,17 +57,17 @@ public sealed class BCConnection<T>
         }
     }
 
-    public async Task WaitCompletedAsync(CancellationToken cancellationToken) {
+    public override async Task WaitCompletedAsync(CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, "WaitCompletedAsync")) {
             await this.RightIncomingConsumer.WaitCompletedAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
-    BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-    public bool SetMonitor(BCMonitor monitor) {
-        if (this._Monitor is { }) { return false; }
-        this._Monitor = monitor;
-        monitor.Add(this.RightIncomingConsumer);
+    public override bool SetMonitor(BCMonitor monitor) {
+        var result = base.SetMonitor(monitor);
+        if (result) {
+            monitor.Add(this.RightIncomingConsumer);
+        }
         return true;
     }
 }
