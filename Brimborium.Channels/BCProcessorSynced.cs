@@ -32,24 +32,30 @@ public abstract class BCProcessorSynced<TIn, TOut>
     public abstract Task OnNext(TIn value, CancellationToken cancellationToken);
 
     public virtual async Task OnError(BCError value, CancellationToken cancellationToken) {
-        await this._Semaphore.WaitAsync(cancellationToken);
-        try {
-            await this.NextConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
-        } finally {
-            this._Semaphore.Release();
+        using (this._Monitor?.LogEnter(this, "OnError")) {
+            await this._Semaphore.WaitAsync(cancellationToken);
+            try {
+                await this.NextConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
+            } finally {
+                this._Semaphore.Release();
+            }
         }
     }
 
     public virtual async Task OnComplete(CancellationToken cancellationToken) {
-        if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
-            BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
-            await this.NextConsumer.OnComplete(cancellationToken).ConfigureAwait(false);
+        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+            if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
+                BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
+                await this.NextConsumer.OnComplete(cancellationToken).ConfigureAwait(false);
+            }
         }
     }
 
     public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
-        await this._Semaphore.WaitAsync(cancellationToken);
-        this._Semaphore.Release();
+        using (this._Monitor?.LogEnter(this, "WaitSelfCompletedAsync")) {
+            await this._Semaphore.WaitAsync(cancellationToken);
+            this._Semaphore.Release();
+        }
     }
 
     public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
@@ -101,20 +107,24 @@ public abstract class BCProcessorSyncedO2<TIn, TOut1, TOut2>
     public abstract Task OnNext(TIn value, CancellationToken cancellationToken);
 
     public virtual async Task OnError(BCError value, CancellationToken cancellationToken) {
-        await this._Semaphore.WaitAsync(cancellationToken);
-        try {
-            await this.NextConsumer1.OnError(value, cancellationToken).ConfigureAwait(false);
-            await this.NextConsumer2.OnError(value, cancellationToken).ConfigureAwait(false);
-        } finally {
-            this._Semaphore.Release();
+        using (this._Monitor?.LogEnter(this, "OnError")) {
+            await this._Semaphore.WaitAsync(cancellationToken);
+            try {
+                await this.NextConsumer1.OnError(value, cancellationToken).ConfigureAwait(false);
+                await this.NextConsumer2.OnError(value, cancellationToken).ConfigureAwait(false);
+            } finally {
+                this._Semaphore.Release();
+            }
         }
     }
 
     public virtual async Task OnComplete(CancellationToken cancellationToken) {
-        if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
-            BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
-            await this.NextConsumer1.OnComplete(cancellationToken).ConfigureAwait(false);
-            await this.NextConsumer2.OnComplete(cancellationToken).ConfigureAwait(false);
+        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+            if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
+                BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
+                await this.NextConsumer1.OnComplete(cancellationToken).ConfigureAwait(false);
+                await this.NextConsumer2.OnComplete(cancellationToken).ConfigureAwait(false);
+            }
         }
     }
 

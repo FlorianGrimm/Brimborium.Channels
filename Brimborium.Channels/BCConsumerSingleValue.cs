@@ -37,23 +37,27 @@ public sealed class BCConsumerSingleValue<T>
     }
 
     public Task OnComplete(CancellationToken cancellationToken) {
-        BCLifeTimeExtension.SetCompleting(ref this._LifeTime);
-        if (BCLifeTimeExtension.SetCompleted(ref this._LifeTime)) {
-            if (this._HasValue) {
-                this._Result.TrySetResult(this._Value);
-            } else if (this._Error is { } error) {
-                this._Result.TrySetException(error);
-            } else {
-                this._Result.TrySetCanceled(CancellationToken.None);
+        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+            BCLifeTimeExtension.SetCompleting(ref this._LifeTime);
+            if (BCLifeTimeExtension.SetCompleted(ref this._LifeTime)) {
+                if (this._HasValue) {
+                    this._Result.TrySetResult(this._Value);
+                } else if (this._Error is { } error) {
+                    this._Result.TrySetException(error);
+                } else {
+                    this._Result.TrySetCanceled(CancellationToken.None);
+                }
             }
+            return Task.CompletedTask;
         }
-        return Task.CompletedTask;
     }
 
     public Task OnError(BCError value, CancellationToken cancellationToken) {
-        this._Error = value.Error;
-        value.SetIsHandled();
-        return Task.CompletedTask;
+        using (this._Monitor?.LogEnter(this, "OnError")) {
+            this._Error = value.Error;
+            value.SetIsHandled();
+            return Task.CompletedTask;
+        }
     }
 
     public Task OnNext(T value, CancellationToken cancellationToken) {

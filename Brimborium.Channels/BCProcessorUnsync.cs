@@ -27,13 +27,17 @@ public abstract class BCProcessorUnsync<TIn, TOut>
     public abstract Task OnNext(TIn value, CancellationToken cancellationToken);
 
     public virtual async Task OnError(BCError value, CancellationToken cancellationToken) {
-        await this.NextConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
+        using (this._Monitor?.LogEnter(this, "OnError")) {
+            await this.NextConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     public virtual async Task OnComplete(CancellationToken cancellationToken) {
-        if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
-            BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
-            await this.NextConsumer.OnComplete(cancellationToken).ConfigureAwait(false);
+        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+            if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
+                BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
+                await this.NextConsumer.OnComplete(cancellationToken).ConfigureAwait(false);
+            }
         }
     }
 
@@ -89,15 +93,19 @@ public abstract class BCProcessorUnsyncO2<TIn, TOut1, TOut2>
     public abstract Task OnNext(TIn value, CancellationToken cancellationToken);
 
     public virtual async Task OnError(BCError value, CancellationToken cancellationToken) {
-        await this.NextConsumer1.OnError(value, cancellationToken).ConfigureAwait(false);
-        await this.NextConsumer2.OnError(value, cancellationToken).ConfigureAwait(false);
+        using (this._Monitor?.LogEnter(this, "OnError")) {
+            await this.NextConsumer1.OnError(value, cancellationToken).ConfigureAwait(false);
+            await this.NextConsumer2.OnError(value, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     public virtual async Task OnComplete(CancellationToken cancellationToken) {
-        if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
-            BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
-            await this.NextConsumer1.OnComplete(cancellationToken).ConfigureAwait(false);
-            await this.NextConsumer2.OnComplete(cancellationToken).ConfigureAwait(false);
+        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+            if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
+                BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
+                await this.NextConsumer1.OnComplete(cancellationToken).ConfigureAwait(false);
+                await this.NextConsumer2.OnComplete(cancellationToken).ConfigureAwait(false);
+            }
         }
     }
 

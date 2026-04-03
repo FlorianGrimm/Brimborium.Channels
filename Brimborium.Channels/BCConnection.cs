@@ -59,14 +59,8 @@ public sealed class BCConnection<T>
         }
     }
 
-    /// <summary>
-    /// TODO
-    /// </summary>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    public override Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
-        return Task.CompletedTask;
-    }
+    // not used
+    public override Task WaitSelfCompletedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     /// <summary>
     /// TODO
@@ -75,8 +69,9 @@ public sealed class BCConnection<T>
     /// <returns></returns>
     public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
-            await this.RightIncomingConsumer.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
             await this.RightIncomingConsumer.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
+
+            await this.RightIncomingConsumer.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 

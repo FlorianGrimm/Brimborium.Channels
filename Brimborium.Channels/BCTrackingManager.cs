@@ -9,30 +9,28 @@ namespace Brimborium.Channels;
 /// Tracks active <see cref="IBCTracking"/> instances by id and delays the downstream
 /// <c>OnComplete</c> signal until all registered trackings have finished.
 /// </summary>
-public interface IBCTrackingManager : IBCPart, IBCConsumer {
+public interface IBCTrackingManager : IBCPart {
     /// <summary>
-    /// TODO
+    /// Add the tracking
     /// </summary>
     /// <param name="tracking"></param>
-    void Add(IBCTracking tracking);
+    void AddTracking<TBCTracking>(TBCTracking tracking)
+        where TBCTracking : IBCTracking;
 
     /// <summary>
-    /// TODO
+    /// Remove tracking
     /// </summary>
     /// <param name="tracking"></param>
     /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    Task OnTrackingComplete(IBCTracking tracking, CancellationToken cancellationToken);
+    /// <returns>true if OnComplete must be send</returns>
+    bool RemoveTracking<TBCTracking>(TBCTracking tracking)
+        where TBCTracking : IBCTracking;
 
     /// <summary>
-    /// TODO
+    /// The left has received a OnComplete
     /// </summary>
-    /// <param name="tracking"></param>
-    /// <param name="value"></param>
-    /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task OnTrackingError(IBCTracking tracking, BCError value, CancellationToken cancellationToken);
-
+    bool OnComplete();
 }
 
 /// <summary>
@@ -46,18 +44,16 @@ public class BCTrackingManager
     , IBCTrackingManager {
     private readonly ConcurrentDictionary<long, IBCTracking> _Tracking = new();
     private readonly TaskCompletionSource _Completion = new();
-    private readonly IBCConsumer _NextConsumer;
 
     public BCTrackingManager(
-            BCDescription description,
-            IBCConsumer nextConsumer
+            BCDescription description
         ) : base(
             description
         ) {
-        this._NextConsumer = nextConsumer;
     }
 
-    public void Add(IBCTracking tracking) {
+    public void AddTracking<TBCTracking>(TBCTracking tracking)
+        where TBCTracking : IBCTracking {
         var id = tracking.GetId();
         if (this._Tracking.TryAdd(id, tracking)) {
             return;
@@ -66,72 +62,118 @@ public class BCTrackingManager
         }
     }
 
-    // called from left
-    public async Task OnComplete(CancellationToken cancellationToken) {
-        if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
+    public bool RemoveTracking<TBCTracking>(TBCTracking tracking) where TBCTracking : IBCTracking {
+        if (this._Tracking.TryRemove(tracking.GetId(), out _)) {
+            if (BCLifeTime.Completing == this._LifeTime) {
+                if (this._Tracking.IsEmpty) {
+                    if (this.SetCompleted()) {
+                        this._Completion.SetResult();
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public bool OnComplete() {
+        if (this.SetCompleting()) {
             if (this._Tracking.IsEmpty) {
-                if (BCLifeTimeExtension.SetCompleted(ref this._LifeTime)) {
+                if (this.SetCompleted()) {
                     this._Completion.SetResult();
-                    await this._NextConsumer.OnComplete(cancellationToken);
+                    return true;
                 }
             }
         }
+        return false;
+    }
+
+    /// <summary>
+    /// Wait for all
+    /// </summary>
+    public override Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+        return this._Completion.Task;
+    }
+
+    /// <summary>no nextConsumer</summary>
+    public override Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+        return Task.CompletedTask;
     }
 
     // called from left
-    public async Task OnError(BCError value, CancellationToken cancellationToken) {
-        await this._NextConsumer.OnError(value, cancellationToken);
-    }
+    //public async Task OnComplete(CancellationToken cancellationToken) {
+    //    using (this._Monitor?.LogEnter(this, "OnComplete")) {
+    //        if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
+    //            if (this._Tracking.IsEmpty) {
+    //                if (BCLifeTimeExtension.SetCompleted(ref this._LifeTime)) {
+    //                    this._Completion.SetResult();
+    //                    await this._NextConsumer.OnComplete(cancellationToken);
+    //                }
+    //            }
+    //        }
+    //    }
+    //}
 
-    // call from down
-    public async Task OnTrackingComplete(IBCTracking tracking, CancellationToken cancellationToken) {
-        if (this._Tracking.TryRemove(tracking.GetId(), out _)) {
-            if (BCLifeTime.Completing == this._LifeTime) {
-                if (this._Tracking.IsEmpty) {
-                    if (BCLifeTimeExtension.SetCompleted(ref this._LifeTime)) {
-                        this._Completion.SetResult();
-                        await this._NextConsumer.OnComplete(cancellationToken);
-                    }
-                }
-            }
-        }
-    }
+    //// called from left
+    //public async Task OnError(BCError value, CancellationToken cancellationToken) {
+    //    using (this._Monitor?.LogEnter(this, "OnError")) {
+    //        await this._NextConsumer.OnError(value, cancellationToken);
+    //    }
+    //}
 
-    // call from down
-    public async Task OnTrackingError(IBCTracking tracking, BCError value, CancellationToken cancellationToken) {
-        await this._NextConsumer.OnError(value, cancellationToken);
-        if (this._Tracking.TryRemove(tracking.GetId(), out _)) {
-            if (BCLifeTime.Completing == this._LifeTime) {
-                if (this._Tracking.IsEmpty) {
-                    if (BCLifeTimeExtension.SetCompleted(ref this._LifeTime)) {
-                        this._Completion.SetResult();
-                        await this._NextConsumer.OnComplete(cancellationToken);
-                    }
-                }
-            }
-        }
-    }
+    //// call from down
+    //public async Task OnTrackingComplete<TBCTracking>(TBCTracking tracking, CancellationToken cancellationToken)
+    //    where TBCTracking : IBCTracking {
+    //    if (this._Tracking.TryRemove(tracking.GetId(), out _)) {
+    //        if (BCLifeTime.Completing == this._LifeTime) {
+    //            if (this._Tracking.IsEmpty) {
+    //                if (BCLifeTimeExtension.SetCompleted(ref this._LifeTime)) {
+    //                    this._Completion.SetResult();
+    //                    await this._NextConsumer.OnComplete(cancellationToken);
+    //                }
+    //            }
+    //        }
+    //    }
+    //}
 
-    public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitSelfCompletedAsync")) {
-            await this._Completion.Task.ConfigureAwait(false);
-        }
-    }
+    //// call from down
+    //public async Task OnTrackingError<TBCTracking>(TBCTracking tracking, BCError value, CancellationToken cancellationToken)
+    //    where TBCTracking : IBCTracking {
+    //    await this._NextConsumer.OnError(value, cancellationToken);
+    //    if (this._Tracking.TryRemove(tracking.GetId(), out _)) {
+    //        if (BCLifeTime.Completing == this._LifeTime) {
+    //            if (this._Tracking.IsEmpty) {
+    //                if (BCLifeTimeExtension.SetCompleted(ref this._LifeTime)) {
+    //                    this._Completion.SetResult();
+    //                    await this._NextConsumer.OnComplete(cancellationToken);
+    //                }
+    //            }
+    //        }
+    //    }
+    //}
 
-    public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
-            await this._NextConsumer.WaitSelfCompletedAsync(cancellationToken);
+    //public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+    //    using (this._Monitor?.LogEnter(this, "WaitSelfCompletedAsync")) {
+    //        await this._Completion.Task.ConfigureAwait(false);
+    //    }
+    //}
 
-            await this._NextConsumer.WaitRightCompletedAsync(cancellationToken);
+    //public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+    //    using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+    //        await this._NextConsumer.WaitSelfCompletedAsync(cancellationToken);
 
-        }
-    }
+    //        await this._NextConsumer.WaitRightCompletedAsync(cancellationToken);
 
-    public override bool SetMonitor(BCMonitor monitor) {
-        var result = base.SetMonitor(monitor);
-        if (result) {
-            monitor.Add(this._NextConsumer);
-        }
-        return result;
-    }
+    //    }
+    //}
+
+    //public override bool SetMonitor(BCMonitor monitor) {
+    //    var result = base.SetMonitor(monitor);
+    //    if (result) {
+    //        monitor.Add(this._NextConsumer);
+    //    }
+    //    return result;
+    //}
+
+
 }

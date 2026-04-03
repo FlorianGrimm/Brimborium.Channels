@@ -1,5 +1,7 @@
 #pragma warning disable IDE1006 // Naming Styles
 
+using System.Net.Sockets;
+
 namespace Brimborium.Channels;
 
 /// <summary>Non-generic marker interface for an in-flight tracking unit; exposes its unique id.</summary>
@@ -18,6 +20,20 @@ public interface IBCTracking<TOut>
     , IBCTracking {
 }
 
+public interface IBCTrackingConsumer<TBCTracking, TOut>
+    : IBCMonitored
+    where TBCTracking : IBCTracking {
+    Task OnNext(TBCTracking tracking, TOut value, CancellationToken cancellationToken);
+    Task OnError(TBCTracking tracking, BCError error, CancellationToken cancellationToken);
+    Task OnComplete(TBCTracking tracking, CancellationToken cancellationToken);
+    //not so easy - is this needed?
+    //Task WaitSelfCompletedAsync(TBCTracking tracking, CancellationToken cancellationToken);
+    //Task WaitRightCompletedAsync(TBCTracking tracking, CancellationToken cancellationToken);
+}
+
+//public readonly record struct BCTracking(long Id) : IBCTracking {
+//    public readonly long GetId() => this.Id;
+//}
 
 /// <summary>
 /// Represents a single in-flight request created by a tracking processor.
@@ -34,26 +50,24 @@ public class BCTracking<TIn, TOut>
     , IBCTracking<TOut> {
     private static long _NextId;
     internal readonly long Id;
-    protected readonly IBCTrackingManager _TrackingManager;
-    private readonly IBCConsumer<TOut> _NextConsumer;
+    protected readonly IBCTrackingConsumer<BCTracking<TIn, TOut>, TOut> NextTrackingConsumer;
+    //protected readonly TaskCompletionSource _Completion = new();
 
     /// <summary>
     /// TODO
     /// </summary>
     /// <param name="Value"></param>
     /// <param name="trackingManager"></param>
-    /// <param name="nextConsumer"></param>
+    /// <param name="nextTrackingConsumer"></param>
     public BCTracking(
             BCDescription description,
             TIn Value,
-            IBCTrackingManager trackingManager,
-            IBCConsumer<TOut> nextConsumer
+            IBCTrackingConsumer<BCTracking<TIn,TOut>, TOut> nextTrackingConsumer
         ) : base(
             description
         ) {
         this.Value = Value;
-        this._TrackingManager = trackingManager;
-        this._NextConsumer = nextConsumer;
+        this.NextTrackingConsumer = nextTrackingConsumer;
         this.Id = System.Threading.Interlocked.Increment(ref _NextId);
     }
 
@@ -64,56 +78,65 @@ public class BCTracking<TIn, TOut>
     /// </summary>
     public TIn Value { get; }
 
+    public async Task OnNext(TOut value, CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+            await this.NextTrackingConsumer.OnNext(
+                this,
+                value,
+                cancellationToken);
+        }
+    }
+
     public async Task OnComplete(CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, "OnComplete")) {
             if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
                 BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
-                await this._TrackingManager.OnTrackingComplete(this, cancellationToken);
-                if (this._Completion is { } completion) {
-                    completion.SetResult();
-                }
+                await this.NextTrackingConsumer.OnComplete(
+                    this,
+                    cancellationToken);
+                //this._Completion.SetResult();
             }
         }
     }
 
     public async Task OnError(BCError value, CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, "OnError")) {
-            await this._TrackingManager.OnTrackingError(this, value, cancellationToken);
+            await this.NextTrackingConsumer.OnError(
+                this,
+                value,
+                cancellationToken);
         }
     }
 
-    private TaskCompletionSource? _Completion;
-
-    public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitSelfCompletedAsync")) {
-            if (this._Completion is { } completion) {
-                await completion.Task;
-            }
-            if (BCLifeTime.Completed == this._LifeTime) {
-                return;
-            }
-            this._Completion = new TaskCompletionSource();
-            await this._Completion.Task;
-        }
+    public override Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+        //using (this._Monitor?.LogEnter(this, "WaitSelfCompletedAsync")) {
+        //    await this._Completion.Task;
+        //}
+        // guess this will never be called
+        return Task.CompletedTask;
     }
 
-    public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
-            await this._NextConsumer.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
-            await this._NextConsumer.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
-        }
+    public override Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+        // guess this will never be called
+        return Task.CompletedTask;
+        //using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+        // not so easy
+        //await this.NextTrackingConsumer.WaitSelfCompletedAsync(
+        //    this,
+        //    cancellationToken).ConfigureAwait(false);
+
+        //await this.NextTrackingConsumer.WaitRightCompletedAsync(
+        //    this,
+        //    cancellationToken).ConfigureAwait(false);
+
+        //}
     }
 
-    public async Task OnNext(TOut value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
-            await this._NextConsumer.OnNext(value, cancellationToken);
-        }
-    }
 
     public override bool SetMonitor(BCMonitor monitor) {
         var result = base.SetMonitor(monitor);
         if (result) {
-            monitor.Add(this._NextConsumer);
+            monitor.Add(this.NextTrackingConsumer);
         }
         return true;
     }

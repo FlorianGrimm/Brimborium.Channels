@@ -46,9 +46,11 @@ public sealed class BCConsumerListValue<T>
     }
 
     public Task OnError(BCError value, CancellationToken cancellationToken) {
-        this._Result.TrySetException(value.Error);
-        value.SetIsHandled();
-        return Task.CompletedTask;
+        using (this._Monitor?.LogEnter(this, "OnError")) {
+            this._Result.TrySetException(value.Error);
+            value.SetIsHandled();
+            return Task.CompletedTask;
+        }
     }
 
     public Task OnNext(T value, CancellationToken cancellationToken) {

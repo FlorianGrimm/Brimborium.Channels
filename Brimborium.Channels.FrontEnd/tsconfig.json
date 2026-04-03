@@ -3,6 +3,10 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "paths": {
+      "brimborium-channels": ["./dist/brimborium-channels"],
+      "webcola": ["./dist/webcola"]
+    },
     "strict": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
@@ -21,5 +25,25 @@
     "strictInputAccessModifiers": true,
     "strictTemplates": true
   },
-  "files": []
+  "files": [],
+  "references": [
+    {
+      "path": "./projects/frontend/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/frontend/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/brimborium-channels/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/brimborium-channels/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/webcola/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/webcola/tsconfig.spec.json"
+    }
+  ]
 }

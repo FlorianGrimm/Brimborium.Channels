@@ -17,11 +17,22 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
     : BCPartMonitored
     , IBCConsumer<TIn>
     where TBCTracking : BCTracking<TIn, TOut> {
-    //protected readonly Func<BCDescription, TIn, IBCTrackingManager, IBCConsumer<TOut>, TBCTracking> _CreateRequest;
-    //private readonly Func<TBCTracking, CancellationToken, Task> _SendRequest;
+    
     protected readonly BCDescription NextDescription;
-    protected readonly IBCConsumer<TOut> NextConsumer;
-    protected readonly BCProcessorTrackingNext TrackingNext;
+
+    /// <summary>
+    /// NextTrackingConsumer --} NextConsumer
+    /// </summary>
+    protected readonly IBCConsumer<BCMessage<TIn, TOut>> NextConsumer;
+
+    /// <summary>
+    /// NextTrackingConsumer --} NextConsumer
+    /// </summary>
+    protected readonly BCTrackingConsumer<TIn, TOut> NextTrackingConsumer;
+
+    /// <summary>
+    /// Tracks trackings
+    /// </summary>
     protected readonly BCTrackingManager TrackingManager;
 
     /// <summary>
@@ -40,68 +51,41 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
             //        TBCTracking
             //    > createRequest,
             //Func<TBCTracking, CancellationToken,Task> sendRequest,
-            IBCConsumer<TOut> nextConsumer
-        ) :base(
+            IBCConsumer<BCMessage<TIn, TOut>> nextConsumer
+        ) : base(
             description
-        ){
+        ) {
         //this._CreateRequest = createRequest;
         //this._SendRequest = sendRequest;
         this.NextDescription = new BCDescription($"{description.Name}-Next");
         this.NextConsumer = nextConsumer;
         BCTrackingManager trackingManager = new(
-            description: new BCDescription($"{description.Name}-Tracking"),
-            nextConsumer: nextConsumer
-            );
+            description: new BCDescription($"{description.Name}-TrackingManager"));
+
         this.TrackingManager = trackingManager;
-        BCProcessorTrackingNext processorTrackingNext = new(
-            description: this.NextDescription,
+
+        var trackingConsumerDescription = new BCDescription($"{description.Name}-TrackingConsumer");
+        this.NextTrackingConsumer = new BCTrackingConsumer<TIn, TOut>(
+            description: trackingConsumerDescription,
             trackingManager: trackingManager,
             nextConsumer: nextConsumer
             );
-        this.TrackingNext = processorTrackingNext;
     }
 
-    /// <summary>
-    /// create(
-    /// this._NextDescription,
-    /// value,
-    /// this._TrackingManager,
-    /// this._TrackingNext);
-    /// </summary>
-    /// <param name="description"></param>
-    /// <param name="Value"></param>
-    /// <param name="trackingManager"></param>
-    /// <param name="nextConsumer"></param>
-    /// <returns></returns>
+
     protected abstract TBCTracking CreateRequest(
-        //BCDescription description,
         TIn Value
-        //IBCTrackingManager trackingManager,
-        //IBCConsumer<TOut> nextConsumer
         );
 
     protected abstract Task SendRequest(
         TBCTracking tracking,
         CancellationToken cancellationToken);
 
-    /// <summary>
-    ///     _CreateRequest
-    ///     _TrackingManager.Add
-    ///     _SendRequest
-    /// </summary>
-    /// <param name="value"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
     public virtual async Task OnNext(TIn value, CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, "OnNext")) {
             try {
-                var tracking = this.CreateRequest(
-                    //this._NextDescription,
-                    value
-                    //this._TrackingManager,
-                    //this._TrackingNext
-                    );
-                this.TrackingManager.Add(tracking);
+                var tracking = this.CreateRequest(value);
+                this.TrackingManager.AddTracking(tracking);
                 await this.SendRequest(tracking, cancellationToken);
             } catch (Exception error) {
                 BCError bcError = new(error);
@@ -111,20 +95,19 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
         }
     }
     public virtual async Task OnError(BCError value, CancellationToken cancellationToken) {
-        await this.NextConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
+        using (this._Monitor?.LogEnter(this, "OnError")) {
+            await this.NextConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
+        }
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
     public virtual async Task OnComplete(CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, "OnComplete")) {
             if (this.SetCompleting()) {
                 if (this.SetCompleted()) {
-                    await this.TrackingNext.OnComplete(cancellationToken);
-                    await this.NextConsumer.OnComplete(cancellationToken);
+                    if (this.TrackingManager.OnComplete()) {
+                        // await this.TrackingConsumer.OnComplete(tracking??, cancellationToken);
+                        await this.NextConsumer.OnComplete(cancellationToken);
+                    }
                 }
             }
         }
@@ -149,6 +132,7 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
         return true;
     }
 
+#if false
     // Hint
     // SetMonitor(BCMonitor monitor) 
     // BCChannelTrackingNext is NextConsumer
@@ -188,11 +172,15 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
         }
 
         public async Task OnComplete(CancellationToken cancellationToken) {
+            using (this._Monitor?.LogEnter(this, "OnComplete")) {
             await this._TrackingManager.OnComplete(cancellationToken);
+            }
         }
 
-        public Task OnError(BCError value, CancellationToken cancellationToken) {
-            return this._NextConsumer.OnError(value, cancellationToken);
+        public async Task OnError(BCError value, CancellationToken cancellationToken) {
+            using (this._Monitor?.LogEnter(this, "OnError")) {
+                await this._NextConsumer.OnError(value, cancellationToken);
+            }
         }
 
         public Task OnNext(TOut value, CancellationToken cancellationToken) {
@@ -221,4 +209,6 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
         }
 
     }
+
+#endif
 }

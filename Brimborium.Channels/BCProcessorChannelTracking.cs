@@ -1,5 +1,5 @@
 #pragma warning disable IDE1006 // Naming Styles
-
+#if false
 namespace Brimborium.Channels;
 
 /// <summary>
@@ -69,13 +69,14 @@ public abstract class BCProcessorChannelTracking<TIn, TOut, TBCTracking>
     /// <param name="value"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public virtual async Task OnNext(TIn value, CancellationToken cancellationToken) {
+    public virtual async Task OnNext(
+        TIn value, 
+        CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, "OnNext")) {
             try {
                 var tracking = this._CreateRequest(
                     this._NextDescription,
                     value,
-                    this._TrackingManager,
                     this._TrackingNext
                     );
                 this._TrackingManager.Add(tracking);
@@ -88,7 +89,9 @@ public abstract class BCProcessorChannelTracking<TIn, TOut, TBCTracking>
         }
     }
     public virtual async Task OnError(BCError value, CancellationToken cancellationToken) {
-        await this._NextConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
+        using (this._Monitor?.LogEnter(this, "OnError")) {
+            await this._NextConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     /// <summary>
@@ -147,7 +150,7 @@ public abstract class BCProcessorChannelTracking<TIn, TOut, TBCTracking>
     /// and passes value signals directly to the downstream consumer.
     /// </summary>
     protected sealed class BCProcessorChannelTrackingNext
-        : IBCConsumer<TOut>
+        : IBCTrackingConsumer<BCTracking, TOut>
         , IBCMonitored {
         private readonly BCTrackingManager _TrackingManager;
         private readonly IBCConsumer<TOut> _NextConsumer;
@@ -168,6 +171,7 @@ public abstract class BCProcessorChannelTracking<TIn, TOut, TBCTracking>
 
         public BCDescription Description { get; }
 
+#if false
         public async Task OnTrackingComplete(BCTracking<TIn, TOut> tracking, CancellationToken cancellationToken) {
             await this._Semaphore.WaitAsync();
             try {
@@ -180,38 +184,42 @@ public abstract class BCProcessorChannelTracking<TIn, TOut, TBCTracking>
         public async Task OnTrackingError(BCTracking<TIn, TOut> tracking, BCError value, CancellationToken cancellationToken) {
             await this._Semaphore.WaitAsync();
             try {
-                await this.OnError(value, cancellationToken);
+                await this._TrackingManager.OnTrackingError(value, cancellationToken);
             } finally {
                 this._Semaphore.Release();
             }
         }
 
         public async Task OnComplete(CancellationToken cancellationToken) {
-            await this._Semaphore.WaitAsync();
-            try {
-                await this._TrackingManager.OnComplete(cancellationToken);
-            } finally {
-                this._Semaphore.Release();
+            using (this._Monitor?.LogEnter(this, "OnComplete")) {
+                await this._Semaphore.WaitAsync();
+                try {
+                    await this._TrackingManager.OnComplete(cancellationToken);
+                } finally {
+                    this._Semaphore.Release();
+                }
             }
-
         }
 
         public async Task OnError(BCError value, CancellationToken cancellationToken) {
-            await this._Semaphore.WaitAsync();
-            try {
-                await this._NextConsumer.OnError(value, cancellationToken);
-            } finally {
-                this._Semaphore.Release();
+            using (this._Monitor?.LogEnter(this, "OnError")) {
+                await this._Semaphore.WaitAsync();
+                try {
+                    await this._NextConsumer.OnError(value, cancellationToken);
+                } finally {
+                    this._Semaphore.Release();
+                }
             }
-
         }
 
         public async Task OnNext(TOut value, CancellationToken cancellationToken) {
-            await this._Semaphore.WaitAsync();
-            try {
-                await this._NextConsumer.OnNext(value, cancellationToken);
-            } finally {
-                this._Semaphore.Release();
+            using (this._Monitor?.LogEnter(this, "OnError")) {
+                await this._Semaphore.WaitAsync();
+                try {
+                    await this._NextConsumer.OnNext(value, cancellationToken);
+                } finally {
+                    this._Semaphore.Release();
+                }
             }
         }
 
@@ -229,6 +237,41 @@ public abstract class BCProcessorChannelTracking<TIn, TOut, TBCTracking>
                 await this._NextConsumer.WaitSelfCompletedAsync(cancellationToken);
             }
         }
+#endif
+        public async Task OnNext(BCTracking tracking, TOut value, CancellationToken cancellationToken) {
+            using (this._Monitor?.LogEnter(this, "OnNext")) {
+                await this._Semaphore.WaitAsync();
+                try {
+                    await this._NextConsumer.OnNext(value, cancellationToken);
+                } finally {
+                    this._Semaphore.Release();
+                }
+            }
+        }
+
+        public Task OnError(BCTracking tracking, BCError error, CancellationToken cancellationToken) {
+            throw new NotImplementedException();
+        }
+
+        public Task OnComplete(BCTracking tracking, CancellationToken cancellationToken) {
+            throw new NotImplementedException();
+        }
+
+        public Task WaitSelfCompletedAsync(BCTracking tracking, CancellationToken cancellationToken) {
+            throw new NotImplementedException();
+        }
+
+        public Task WaitRightCompletedAsync(BCTracking tracking, CancellationToken cancellationToken) {
+            throw new NotImplementedException();
+        }
+
+        public Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+            throw new NotImplementedException();
+        }
+
+        public Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+            throw new NotImplementedException();
+        }
 
         BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
         public bool SetMonitor(BCMonitor monitor) {
@@ -236,6 +279,6 @@ public abstract class BCProcessorChannelTracking<TIn, TOut, TBCTracking>
             this._Monitor = monitor;
             return true;
         }
-
     }
 }
+#endif

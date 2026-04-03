@@ -47,36 +47,40 @@ public sealed class BCDelegate<TIn, TOut>
     }
 
     public override async Task OnError(BCError value, CancellationToken cancellationToken) {
-        try {
-            if (this._OnError is { } onError) {
-                await this._Semaphore.WaitAsync(cancellationToken);
-                try {
-                    await onError(value, this.NextConsumer, cancellationToken).ConfigureAwait(false);
-                } finally {
-                    this._Semaphore.Release();
+        using (this._Monitor?.LogEnter(this, "OnError")) {
+            try {
+                if (this._OnError is { } onError) {
+                    await this._Semaphore.WaitAsync(cancellationToken);
+                    try {
+                        await onError(value, this.NextConsumer, cancellationToken).ConfigureAwait(false);
+                    } finally {
+                        this._Semaphore.Release();
+                    }
+                } else {
+                    await base.OnError(value, cancellationToken).ConfigureAwait(false);
                 }
-            } else {
-                await base.OnError(value, cancellationToken).ConfigureAwait(false);
+            } catch (Exception error) {
+                BCError bcError = new(error);
+                await base.OnError(bcError, cancellationToken).ConfigureAwait(false);
+                bcError.ThrowIfNotHandled();
             }
-        } catch (Exception error) {
-            BCError bcError = new(error);
-            await base.OnError(bcError, cancellationToken).ConfigureAwait(false);
-            bcError.ThrowIfNotHandled();
         }
     }
 
     public override async Task OnComplete(CancellationToken cancellationToken) {
-        await this._Semaphore.WaitAsync(cancellationToken);
-        try {
-            if (this.SetCompleting()) {
-                this.SetCompleted();
-                if (this._OnComplete is { } onComplete) {
-                    await onComplete(this.NextConsumer, cancellationToken);
+        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+            await this._Semaphore.WaitAsync(cancellationToken);
+            try {
+                if (this.SetCompleting()) {
+                    this.SetCompleted();
+                    if (this._OnComplete is { } onComplete) {
+                        await onComplete(this.NextConsumer, cancellationToken);
+                    }
+                    await this.NextConsumer.OnComplete(cancellationToken).ConfigureAwait(false);
                 }
-                await this.NextConsumer.OnComplete(cancellationToken).ConfigureAwait(false);
+            } finally {
+                this._Semaphore.Release();
             }
-        } finally {
-            this._Semaphore.Release();
         }
     }
 }
