@@ -23,66 +23,81 @@ public interface IBCConnection<T> : IBCConsumer<T> {
 /// </summary>
 /// <typeparam name="T">The type of values flowing through this connection.</typeparam>
 public sealed class BCConnection<T>
-    :BCPartMonitored
+    : BCPartMonitored
     , IBCConnection<T> {
+    private readonly SemaphoreSlim _Semaphore = new(1, 1);
 
     /// <summary>
-    /// TODO
+    /// Block.LeftOutgoingProducer --} BCConnection --} Block.RightIncomingConsumer
     /// </summary>
     public IBCProducer<T> LeftOutgoingProducer { get; }
 
     /// <summary>
-    /// TODO
+    /// Block.LeftOutgoingProducer --} BCConnection --} Block.RightIncomingConsumer
     /// </summary>
     public IBCConsumer<T> RightIncomingConsumer { get; }
 
     /// <summary>
-    /// TODO
+    /// Block.LeftOutgoingProducer --} BCConnection --} Block.RightIncomingConsumer
     /// </summary>
-    /// <param name="outgoingProducer">TODO</param>
-    /// <param name="incomingConsumer">TODO</param>
+    /// <param name="outgoingProducer">the left block.outgoingProducer</param>
+    /// <param name="incomingConsumer">the right block.incomingConsumer</param>
     public BCConnection(
             BCDescription description,
             IBCProducer<T> outgoingProducer,
             IBCConsumer<T> incomingConsumer
-        ): base(
+        ) : base(
             description
         ) {
         this.LeftOutgoingProducer = outgoingProducer;
         this.RightIncomingConsumer = incomingConsumer;
     }
 
-    public async Task OnComplete(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
-            if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
-                BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
-                await this.RightIncomingConsumer.OnComplete(cancellationToken).ConfigureAwait(false);
+    public async Task OnNext(T value, CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnNext))) {
+            await this._Semaphore.WaitAsync(cancellationToken);
+            try {
+                await this.RightIncomingConsumer.OnNext(value, cancellationToken).ConfigureAwait(false);
+            } finally {
+                this._Semaphore.Release();
             }
         }
     }
 
     public async Task OnError(BCError value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnError")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
+            await this._Semaphore.WaitAsync(cancellationToken);
+            try {
             await this.RightIncomingConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
+            } finally {
+                this._Semaphore.Release();
+            }
         }
     }
 
-    public async Task OnNext(T value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnNext")) {
-            await this.RightIncomingConsumer.OnNext(value, cancellationToken).ConfigureAwait(false);
+    public async Task OnComplete(CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
+            if (this.SetCompleting()) {
+                if (this.SetCompleted()) {
+                    await this._Semaphore.WaitAsync(cancellationToken);
+                    try {
+                        await this.RightIncomingConsumer.OnComplete(cancellationToken).ConfigureAwait(false);
+                    } finally {
+                        this._Semaphore.Release();
+                    }
+                }
+            }
         }
     }
 
     // not used
-    public override Task WaitSelfCompletedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+        await this._Semaphore.WaitAsync(cancellationToken);
+        this._Semaphore.Release();
+    }
 
-    /// <summary>
-    /// TODO
-    /// </summary>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
     public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.WaitRightCompletedAsync))) {
             await this.RightIncomingConsumer.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
 
             await this.RightIncomingConsumer.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
@@ -95,5 +110,12 @@ public sealed class BCConnection<T>
             monitor.Add(this.RightIncomingConsumer);
         }
         return true;
+    }
+
+    public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
+        node.Kind = "Connection";
+        node.Name = this.Description.Name;
+        node.AddIncoming(this.LeftOutgoingProducer);
+        node.AddOutgoing(this.RightIncomingConsumer);
     }
 }

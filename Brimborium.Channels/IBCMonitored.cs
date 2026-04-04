@@ -17,5 +17,20 @@ public interface IBCMonitored : IBCPart {
     /// <returns><c>true</c> if the monitor was set; <c>false</c> if one was already attached.</returns>
     bool SetMonitor(IBCMonitor monitor);
 
-    void Describe(BCDescriptionGraph description);
+    /// <summary>
+    /// Set information to node.
+    /// </summary>
+    /// <param name="node"></param>
+    /// <param name="description"></param>
+    void Describe(BCDescriptionNode node, BCDescriptionGraph description);
+
+    /// <summary>
+    /// NodeId of BCDescriptionNode
+    /// </summary>
+    string? GetNodeId();
+
+    /// <summary>
+    /// NodeId of BCDescriptionNode
+    /// </summary>
+    void SetNodeId(string nodeId);
 }

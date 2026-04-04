@@ -36,44 +36,63 @@ public sealed class BCConsumerSingleValue<T>
         return this._Result.Task;
     }
 
-    public Task OnComplete(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
-            BCLifeTimeExtension.SetCompleting(ref this._LifeTime);
-            if (BCLifeTimeExtension.SetCompleted(ref this._LifeTime)) {
-                if (this._HasValue) {
-                    this._Result.TrySetResult(this._Value);
-                } else if (this._Error is { } error) {
-                    this._Result.TrySetException(error);
-                } else {
-                    this._Result.TrySetCanceled(CancellationToken.None);
-                }
-            }
+    public Task OnSubscribe(IBCConnection<T> connection, CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnSubscribe))) {
+            this.PreconditionOnSubscribe();
+            this._ListConnection.Add(connection);
+            return Task.CompletedTask;
+        }
+    }
+
+    public Task OnNext(T value, CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnNext))) {
+            this.PreconditionOnNext();
+            this._HasValue = true;
+            this._Value = value;
             return Task.CompletedTask;
         }
     }
 
     public Task OnError(BCError value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnError")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
+            this.PreconditionOnError();
             this._Error = value.Error;
             value.SetIsHandled();
             return Task.CompletedTask;
         }
     }
 
-    public Task OnNext(T value, CancellationToken cancellationToken) {
-        this._HasValue = true;
-        this._Value = value;
-        return Task.CompletedTask;
+    public Task OnComplete(CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
+            this.SetCompleting();
+            if (this.GetIsAllConnectionCompleted()) {
+                if (this.SetCompleted()) {
+                    if (this._HasValue) {
+                        this._Result.TrySetResult(this._Value);
+                    } else if (this._Error is { } error) {
+                        this._Result.TrySetException(error);
+                    } else {
+                        this._Result.TrySetCanceled(CancellationToken.None);
+                    }
+                }
+            }
+            return Task.CompletedTask;
+        }
     }
 
-    public Task OnSubscribe(IBCConnection<T> connection, CancellationToken cancellationToken) {
-        this._ListConnection.Add(connection);
-        return Task.CompletedTask;
+    private bool GetIsAllConnectionCompleted() {
+        foreach (var connection in this._ListConnection) {
+            if (BCLifeTime.Completed != connection.LifeTime) {
+                return false;
+            }
+        }
+        return true;
     }
+
     /// <summary>
     /// TODO
     /// </summary>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">stop me</param>
     /// <returns></returns>
     public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
         await this._Result.Task;
@@ -82,7 +101,7 @@ public sealed class BCConsumerSingleValue<T>
     /// <summary>
     /// TODO
     /// </summary>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">stop me</param>
     /// <returns></returns>
     public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
         foreach (var connection in this._ListConnection) {

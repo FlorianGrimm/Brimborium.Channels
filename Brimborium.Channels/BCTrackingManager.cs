@@ -21,7 +21,7 @@ public interface IBCTrackingManager : IBCPart {
     /// Remove tracking
     /// </summary>
     /// <param name="tracking"></param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">stop me</param>
     /// <returns>true if OnComplete must be send</returns>
     bool RemoveTracking<TBCTracking>(TBCTracking tracking)
         where TBCTracking : IBCTracking;
@@ -102,7 +102,7 @@ public class BCTrackingManager
 
     // called from left
     //public async Task OnComplete(CancellationToken cancellationToken) {
-    //    using (this._Monitor?.LogEnter(this, "OnComplete")) {
+    //    using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
     //        if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
     //            if (this._Tracking.IsEmpty) {
     //                if (BCLifeTimeExtension.SetCompleted(ref this._LifeTime)) {
@@ -116,7 +116,7 @@ public class BCTrackingManager
 
     //// called from left
     //public async Task OnError(BCError value, CancellationToken cancellationToken) {
-    //    using (this._Monitor?.LogEnter(this, "OnError")) {
+    //    using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
     //        await this._NextConsumer.OnError(value, cancellationToken);
     //    }
     //}
@@ -153,13 +153,13 @@ public class BCTrackingManager
     //}
 
     //public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
-    //    using (this._Monitor?.LogEnter(this, "WaitSelfCompletedAsync")) {
+    //    using (this._Monitor?.LogEnter(this, nameof(this.WaitSelfCompletedAsync))) {
     //        await this._Completion.Task.ConfigureAwait(false);
     //    }
     //}
 
     //public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
-    //    using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+    //    using (this._Monitor?.LogEnter(this, nameof(this.WaitRightCompletedAsync))) {
     //        await this._NextConsumer.WaitSelfCompletedAsync(cancellationToken);
 
     //        await this._NextConsumer.WaitRightCompletedAsync(cancellationToken);

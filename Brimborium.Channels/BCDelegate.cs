@@ -47,7 +47,7 @@ public sealed class BCDelegate<TIn, TOut>
     }
 
     public override async Task OnError(BCError value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnError")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
             try {
                 if (this._OnError is { } onError) {
                     await this._Semaphore.WaitAsync(cancellationToken);
@@ -68,7 +68,7 @@ public sealed class BCDelegate<TIn, TOut>
     }
 
     public override async Task OnComplete(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
             await this._Semaphore.WaitAsync(cancellationToken);
             try {
                 if (this.SetCompleting()) {

@@ -55,7 +55,7 @@ public sealed class BCChannelTracking<TIn, TOut>
     }
 
     public override async Task OnNext(TIn value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnNext")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnNext))) {
             try {
                 var tracking = new BCTracking<TIn, TOut>(
                     this._NextDescription,
@@ -75,7 +75,7 @@ public sealed class BCChannelTracking<TIn, TOut>
     }
 
     public override async Task OnComplete(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
             if (this.SetCompleting()) {
                 this._Channel.Writer.Complete(default);
                 if (this.SetCompleted()) {

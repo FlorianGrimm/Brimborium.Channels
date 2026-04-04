@@ -32,7 +32,7 @@ public abstract class BCProcessorSynced<TIn, TOut>
     public abstract Task OnNext(TIn value, CancellationToken cancellationToken);
 
     public virtual async Task OnError(BCError value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnError")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
             await this._Semaphore.WaitAsync(cancellationToken);
             try {
                 await this.NextConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
@@ -43,7 +43,7 @@ public abstract class BCProcessorSynced<TIn, TOut>
     }
 
     public virtual async Task OnComplete(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
             if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
                 BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
                 await this.NextConsumer.OnComplete(cancellationToken).ConfigureAwait(false);
@@ -52,14 +52,14 @@ public abstract class BCProcessorSynced<TIn, TOut>
     }
 
     public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitSelfCompletedAsync")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.WaitSelfCompletedAsync))) {
             await this._Semaphore.WaitAsync(cancellationToken);
             this._Semaphore.Release();
         }
     }
 
     public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.WaitRightCompletedAsync))) {
             await this.NextConsumer.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
             await this.NextConsumer.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -70,6 +70,11 @@ public abstract class BCProcessorSynced<TIn, TOut>
         this._Monitor = monitor;
         monitor.Add(this.NextConsumer);
         return true;
+    }
+
+    public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
+        base.Describe(node, description);
+        node.AddOutgoing(this.NextConsumer);
     }
 }
 
@@ -107,7 +112,7 @@ public abstract class BCProcessorSyncedO2<TIn, TOut1, TOut2>
     public abstract Task OnNext(TIn value, CancellationToken cancellationToken);
 
     public virtual async Task OnError(BCError value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnError")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
             await this._Semaphore.WaitAsync(cancellationToken);
             try {
                 await this.NextConsumer1.OnError(value, cancellationToken).ConfigureAwait(false);
@@ -119,7 +124,7 @@ public abstract class BCProcessorSyncedO2<TIn, TOut1, TOut2>
     }
 
     public virtual async Task OnComplete(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
             if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
                 BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
                 await this.NextConsumer1.OnComplete(cancellationToken).ConfigureAwait(false);
@@ -129,13 +134,13 @@ public abstract class BCProcessorSyncedO2<TIn, TOut1, TOut2>
     }
 
     public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitSelfCompletedAsync")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.WaitSelfCompletedAsync))) {
             await this._Semaphore.WaitAsync(cancellationToken);
             this._Semaphore.Release();
         }
     }
     public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.WaitRightCompletedAsync))) {
             await this.NextConsumer1.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
             await this.NextConsumer2.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
 
@@ -151,5 +156,11 @@ public abstract class BCProcessorSyncedO2<TIn, TOut1, TOut2>
             monitor.Add(this.NextConsumer2);
         }
         return true;
+    }
+
+    public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
+        base.Describe(node, description);
+        node.AddOutgoing(this.NextConsumer1);
+        node.AddOutgoing(this.NextConsumer2);
     }
 }

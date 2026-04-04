@@ -20,14 +20,14 @@ public class BCTrackingConsumer<TIn, TOut>
     }
 
     public async Task OnNext(BCTracking<TIn, TOut> tracking, TOut value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnNext")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnNext))) {
             var message = BCMessage<TIn, TOut>.OnNext(tracking.Value, value);
             await this._NextConsumer.OnNext(message, cancellationToken);
         }
     }
 
     public async Task OnError(BCTracking<TIn, TOut> tracking, BCError error, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnError")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
             var message = BCMessage<TIn, TOut>.OnError(tracking.Value, error);
             await this._NextConsumer.OnNext(message, cancellationToken);
             if (this._TrackingManager.RemoveTracking(tracking)) {
@@ -37,7 +37,7 @@ public class BCTrackingConsumer<TIn, TOut>
     }
 
     public async Task OnComplete(BCTracking<TIn, TOut> tracking, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
             var message = BCMessage<TIn, TOut>.OnComplete(tracking.Value);
             await this._NextConsumer.OnNext(message, cancellationToken);
 
@@ -48,25 +48,25 @@ public class BCTrackingConsumer<TIn, TOut>
     }
 
     //public Task WaitRightCompletedAsync(BCTracking<TIn, TOut> tracking, CancellationToken cancellationToken) {
-    //    using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+    //    using (this._Monitor?.LogEnter(this, nameof(this.WaitRightCompletedAsync))) {
     //        throw new NotImplementedException();
     //    }
     //}
 
     //public Task WaitSelfCompletedAsync(BCTracking<TIn, TOut> tracking, CancellationToken cancellationToken) {
-    //    using (this._Monitor?.LogEnter(this, "WaitSelfCompletedAsync")) {
+    //    using (this._Monitor?.LogEnter(this, nameof(this.WaitSelfCompletedAsync))) {
     //        throw new NotImplementedException();
     //    }
     //}
 
     public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitSelfCompletedAsync")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.WaitSelfCompletedAsync))) {
             await this._TrackingManager.WaitSelfCompletedAsync(cancellationToken);
         }
     }
 
     public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.WaitRightCompletedAsync))) {
             await this._NextConsumer.WaitSelfCompletedAsync(cancellationToken);
             await this._NextConsumer.WaitRightCompletedAsync(cancellationToken);
         }

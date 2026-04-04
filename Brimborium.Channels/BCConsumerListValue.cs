@@ -8,8 +8,7 @@ namespace Brimborium.Channels;
 /// <typeparam name="T">The type of values collected by this consumer.</typeparam>
 public sealed class BCConsumerListValue<T>
     : BCPartMonitored
-    , IBCConsumerSubscribable<T>
-    , IBCMonitored {
+    , IBCConsumerSubscribable<T> {
     private readonly TaskCompletionSource<List<T>> _Result = new();
     private readonly List<IBCConnection<T>> _ListConnection = new();
     private readonly List<T> _ListTarget;
@@ -28,25 +27,37 @@ public sealed class BCConsumerListValue<T>
     }
 
     /// <summary>
-    /// TODO
+    /// Get the result after OnComplete was called
     /// </summary>
-    /// <param name="cancellationToken">TODO</param>
-    /// <returns>TODO</returns>
+    /// <param name="cancellationToken">stop me</param>
+    /// <returns>the result</returns>
     public Task<List<T>> GetResultAsync(CancellationToken cancellationToken) {
         return this._Result.Task.WaitAsync(cancellationToken);
     }
 
     public Task OnComplete(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
-            BCLifeTimeExtension.SetCompleting(ref this._LifeTime);
-            BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
-            this._Result.TrySetResult(this._ListTarget);
-            return Task.CompletedTask;
+        using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
+            this.SetCompleting();
+            if (this.GetIsAllConnectionCompleted()) {
+                if (this.SetCompleted()) {
+                    this._Result.TrySetResult(this._ListTarget);
+                }
+            }
         }
+        return Task.CompletedTask;
+    }
+
+    private bool GetIsAllConnectionCompleted() {
+        foreach (var connection in this._ListConnection) {
+            if (BCLifeTime.Completed != connection.LifeTime) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public Task OnError(BCError value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnError")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
             this._Result.TrySetException(value.Error);
             value.SetIsHandled();
             return Task.CompletedTask;
@@ -64,31 +75,18 @@ public sealed class BCConsumerListValue<T>
     }
 
     /// <summary>
-    /// TODO
+    /// Waits for OnComplete being called.
     /// </summary>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">stop me</param>
     /// <returns></returns>
     public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
         await this._Result.Task;
     }
 
-    /// <summary>
-    /// TODO
-    /// </summary>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
     public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
         foreach (var connection in this._ListConnection) {
             await connection.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
             await connection.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
         }
-    }
-
-    IBCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-    public override bool SetMonitor(IBCMonitor monitor) {
-        if (this._Monitor is { }) { return false; }
-        this._Monitor = monitor;
-        // no next consumer
-        return true;
     }
 }

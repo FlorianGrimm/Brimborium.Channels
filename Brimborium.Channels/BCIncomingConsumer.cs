@@ -29,7 +29,7 @@ public sealed class BCIncomingConsumer<T>
     }
 
     public async Task OnSubscribe(IBCConnection<T> connection, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnSubscribe")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnSubscribe))) {
             await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
                 var oldValue = this._ListIncomingConnection;
@@ -56,7 +56,7 @@ public sealed class BCIncomingConsumer<T>
     }
 
     public async Task OnNext(T value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnNext")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnNext))) {
             await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
                 await this._NextConsumer.OnNext(value, cancellationToken).ConfigureAwait(false);
@@ -67,7 +67,7 @@ public sealed class BCIncomingConsumer<T>
     }
 
     public async Task OnError(BCError value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnError")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
             await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
                 await this._NextConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
@@ -89,7 +89,7 @@ public sealed class BCIncomingConsumer<T>
     }
 
     public async Task OnComplete(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
             await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
                 this._Owner.SetCompleting();
@@ -111,7 +111,7 @@ public sealed class BCIncomingConsumer<T>
     }
 
     public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.WaitRightCompletedAsync))) {
             await this._NextConsumer.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
             await this._NextConsumer.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -123,5 +123,10 @@ public sealed class BCIncomingConsumer<T>
             monitor.Add(this._NextConsumer);
         }
         return true;
+    }
+
+    public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
+        base.Describe(node, description);
+        node.AddOutgoing(this._NextConsumer);
     }
 }

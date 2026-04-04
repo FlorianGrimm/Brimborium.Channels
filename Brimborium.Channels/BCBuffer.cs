@@ -51,10 +51,10 @@ public sealed class BCBuffer<TIn, TOut>
     /// TODO
     /// </summary>
     /// <param name="value"></param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">stop me</param>
     /// <returns></returns>
     public override async Task OnNext(TIn value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnNext")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnNext))) {
             await this._Semaphore.WaitAsync(cancellationToken);
             try {
                 await this._Channel.Writer.WriteAsync(value, cancellationToken);
@@ -76,10 +76,10 @@ public sealed class BCBuffer<TIn, TOut>
     /// TODO
     /// </summary>
     /// <param name="value"></param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">stop me</param>
     /// <returns></returns>
     public override async Task OnError(BCError value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnError")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
             await this._Semaphore.WaitAsync(cancellationToken);
             try {
                 if (this._OnError is { } onError) {
@@ -100,10 +100,10 @@ public sealed class BCBuffer<TIn, TOut>
     /// <summary>
     /// TODO
     /// </summary>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">stop me</param>
     /// <returns></returns>
     public override async Task OnComplete(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
             await this._Semaphore.WaitAsync(cancellationToken);
             try {
                 if (this.SetCompleting()) {
@@ -121,10 +121,10 @@ public sealed class BCBuffer<TIn, TOut>
     /// <summary>
     /// TODO
     /// </summary>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">stop me</param>
     /// <returns></returns>
     public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitSelfCompletedAsync")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.WaitSelfCompletedAsync))) {
             await this._Semaphore.WaitAsync(cancellationToken);
             try {
                 this.StartExecution(cancellationToken);
@@ -147,10 +147,10 @@ public sealed class BCBuffer<TIn, TOut>
     /// <summary>
     /// TODO
     /// </summary>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">stop me</param>
     /// <returns></returns>
     public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.WaitRightCompletedAsync))) {
             await this.NextConsumer.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
             await this.NextConsumer.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -167,7 +167,7 @@ public sealed class BCBuffer<TIn, TOut>
 
         async Task StartExecutionAsync(CancellationToken cancellation) {
             try {
-                var task = this.ExecutionAsync(cancellationToken);
+                var task = this.ExecutionLoop(cancellationToken);
                 this._TaskExecution = task;
                 await task;
             } catch (Exception ex) {
@@ -179,9 +179,9 @@ public sealed class BCBuffer<TIn, TOut>
         }
     }
 
-    private TaskCompletionSource _Completion = new();
-    private async Task ExecutionAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "ExecutionLoop")) {
+    private readonly TaskCompletionSource _Completion = new();
+    private async Task ExecutionLoop(CancellationToken cancellationToken) {
+        using (this._Monitor?.LogEnter(this, nameof(this.ExecutionLoop))) {
             try {
                 var reader = this._Channel.Reader;
                 while (await reader.WaitToReadAsync(cancellationToken)) {

@@ -12,8 +12,7 @@ public class BCBlockI1O1<TIn1, TOut1> : BCBlock {
         return new BCBlockI1O1<TIn1, TOut1>(
             description,
             consumer1(outgoingProducer1),
-            outgoingProducer1
-            );
+            outgoingProducer1);
     }
     public readonly BCIncomingConsumer<TIn1> IncomingConsumer1;
     public readonly BCOutgoingProducer<TOut1> OutgoingProducer1;
@@ -26,6 +25,21 @@ public class BCBlockI1O1<TIn1, TOut1> : BCBlock {
     ) {
         this.AddIncoming(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
         this.AddOutgoing(this.OutgoingProducer1 = outgoingProducer1);
+    }
+
+    public override bool SetMonitor(IBCMonitor monitor) {
+        bool result = base.SetMonitor(monitor);
+        if (result) {
+            monitor.Add(this.IncomingConsumer1);
+            monitor.Add(this.OutgoingProducer1);
+        }
+        return result;
+    }
+
+    public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
+        base.Describe(node, description);
+        node.AddIncoming(this.IncomingConsumer1);
+        node.AddOutgoing(this.OutgoingProducer1);
     }
 }
 
@@ -69,6 +83,23 @@ public class BCBlockI2O1<TIn1, TIn2, TOut1> : BCBlock {
         this.AddIncoming(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
         this.AddIncoming(this.IncomingConsumer2 = new(description?.In2 ?? new("in2"), consumer2, this));
         this.AddOutgoing(this.OutgoingProducer1 = outgoingProducer1);
+    }
+
+    public override bool SetMonitor(IBCMonitor monitor) {
+        bool result = base.SetMonitor(monitor);
+        if (result) {
+            monitor.Add(this.IncomingConsumer1);
+            monitor.Add(this.IncomingConsumer2);
+            monitor.Add(this.OutgoingProducer1);
+        }
+        return result;
+    }
+
+    public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
+        base.Describe(node, description);
+        node.AddIncoming(this.IncomingConsumer1);
+        node.AddIncoming(this.IncomingConsumer2);
+        node.AddOutgoing(this.OutgoingProducer1);
     }
 }
 
@@ -119,6 +150,25 @@ public class BCBlockI3O1<TIn1, TIn2, TIn3, TOut1> : BCBlock {
         this.AddIncoming(this.IncomingConsumer3 = new(description?.In3 ?? new("in3"), consumer3, this));
         this.AddOutgoing(this.OutgoingProducer1 = outgoingProducer1);
     }
+
+    public override bool SetMonitor(IBCMonitor monitor) {
+        bool result = base.SetMonitor(monitor);
+        if (result) {
+            monitor.Add(this.IncomingConsumer1);
+            monitor.Add(this.IncomingConsumer2);
+            monitor.Add(this.IncomingConsumer3);
+            monitor.Add(this.OutgoingProducer1);
+        }
+        return result;
+    }
+
+    public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
+        base.Describe(node, description);
+        node.AddIncoming(this.IncomingConsumer1);
+        node.AddIncoming(this.IncomingConsumer2);
+        node.AddIncoming(this.IncomingConsumer3);
+        node.AddOutgoing(this.OutgoingProducer1);
+    }
 }
 
 /// <summary>Optional description record for naming the parts of a <see cref="BCBlockI3O1{TIn1,TIn2,TIn3,TOut1}"/>.</summary>
@@ -162,6 +212,23 @@ public class BCBlockI1O2<TIn1, TOut1, TOut2> : BCBlock {
         this.AddIncoming(this.IncomingConsumer1 = new(description?.In1 ?? new("in1"), consumer1, this));
         this.AddOutgoing(this.OutgoingProducer1 = outgoingProducer1);
         this.AddOutgoing(this.OutgoingProducer2 = outgoingProducer2);
+    }
+
+    public override bool SetMonitor(IBCMonitor monitor) {
+        bool result = base.SetMonitor(monitor);
+        if (result) {
+            monitor.Add(this.IncomingConsumer1);
+            monitor.Add(this.OutgoingProducer1);
+            monitor.Add(this.OutgoingProducer2);
+        }
+        return result;
+    }
+
+    public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
+        base.Describe(node, description);
+        node.AddIncoming(this.IncomingConsumer1);
+        node.AddOutgoing(this.OutgoingProducer1);
+        node.AddOutgoing(this.OutgoingProducer2);
     }
 }
 
@@ -214,6 +281,25 @@ public class BCBlockI2O2<TIn1, TIn2, TOut1, TOut2> : BCBlock {
         this.AddIncoming(this.IncomingConsumer2 = new(description?.In2 ?? new("in2"), consumer2, this));
         this.AddOutgoing(this.OutgoingProducer1 = outgoingProducer1);
         this.AddOutgoing(this.OutgoingProducer2 = outgoingProducer2);
+    }
+
+    public override bool SetMonitor(IBCMonitor monitor) {
+        bool result = base.SetMonitor(monitor);
+        if (result) {
+            monitor.Add(this.IncomingConsumer1);
+            monitor.Add(this.IncomingConsumer2);
+            monitor.Add(this.OutgoingProducer1);
+            monitor.Add(this.OutgoingProducer2);
+        }
+        return result;
+    }
+
+    public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
+        base.Describe(node, description);
+        node.AddIncoming(this.IncomingConsumer1);
+        node.AddIncoming(this.IncomingConsumer2);
+        node.AddOutgoing(this.OutgoingProducer1);
+        node.AddOutgoing(this.OutgoingProducer2);
     }
 }
 
@@ -271,6 +357,27 @@ public class BCBlockI3O2<TIn1, TIn2, TIn3, TOut1, TOut2> : BCBlock {
         this.AddOutgoing(this.OutgoingProducer1 = outgoingProducer1);
         this.AddOutgoing(this.OutgoingProducer2 = outgoingProducer2);
     }
+
+    public override bool SetMonitor(IBCMonitor monitor) {
+        bool result = base.SetMonitor(monitor);
+        if (result) {
+            monitor.Add(this.IncomingConsumer1);
+            monitor.Add(this.IncomingConsumer2);
+            monitor.Add(this.IncomingConsumer3);
+            monitor.Add(this.OutgoingProducer1);
+            monitor.Add(this.OutgoingProducer2);
+        }
+        return result;
+    }
+
+    public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
+        base.Describe(node, description);
+        node.AddIncoming(this.IncomingConsumer1);
+        node.AddIncoming(this.IncomingConsumer2);
+        node.AddIncoming(this.IncomingConsumer3);
+        node.AddOutgoing(this.OutgoingProducer1);
+        node.AddOutgoing(this.OutgoingProducer2);
+    }
 }
 
 /// <summary>Optional description record for naming the parts of a <see cref="BCBlockI3O2{TIn1,TIn2,TIn3,TOut1,TOut2}"/>.</summary>
@@ -324,6 +431,25 @@ public class BCBlockI1O3<TIn1, TOut1, TOut2, TOut3> : BCBlock {
         this.AddOutgoing(this.OutgoingProducer1 = outgoingProducer1);
         this.AddOutgoing(this.OutgoingProducer2 = outgoingProducer2);
         this.AddOutgoing(this.OutgoingProducer3 = outgoingProducer3);
+    }
+
+    public override bool SetMonitor(IBCMonitor monitor) {
+        bool result = base.SetMonitor(monitor);
+        if (result) {
+            monitor.Add(this.IncomingConsumer1);
+            monitor.Add(this.OutgoingProducer1);
+            monitor.Add(this.OutgoingProducer2);
+            monitor.Add(this.OutgoingProducer3);
+        }
+        return result;
+    }
+
+    public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
+        base.Describe(node, description);
+        node.AddIncoming(this.IncomingConsumer1);
+        node.AddOutgoing(this.OutgoingProducer1);
+        node.AddOutgoing(this.OutgoingProducer2);
+        node.AddOutgoing(this.OutgoingProducer3);
     }
 }
 
@@ -383,6 +509,27 @@ public class BCBlockI2O3<TIn1, TIn2, TOut1, TOut2, TOut3> : BCBlock {
         this.AddOutgoing(this.OutgoingProducer1 = outgoingProducer1);
         this.AddOutgoing(this.OutgoingProducer2 = outgoingProducer2);
         this.AddOutgoing(this.OutgoingProducer3 = outgoingProducer3);
+    }
+
+    public override bool SetMonitor(IBCMonitor monitor) {
+        bool result = base.SetMonitor(monitor);
+        if (result) {
+            monitor.Add(this.IncomingConsumer1);
+            monitor.Add(this.IncomingConsumer2);
+            monitor.Add(this.OutgoingProducer1);
+            monitor.Add(this.OutgoingProducer2);
+            monitor.Add(this.OutgoingProducer3);
+        }
+        return result;
+    }
+
+    public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
+        base.Describe(node, description);
+        node.AddIncoming(this.IncomingConsumer1);
+        node.AddIncoming(this.IncomingConsumer2);
+        node.AddOutgoing(this.OutgoingProducer1);
+        node.AddOutgoing(this.OutgoingProducer2);
+        node.AddOutgoing(this.OutgoingProducer3);
     }
 }
 
@@ -446,6 +593,29 @@ public class BCBlockI3O3<TIn1, TIn2, TIn3, TOut1, TOut2, TOut3> : BCBlock {
         this.AddOutgoing(this.OutgoingProducer1 = outgoingProducer1);
         this.AddOutgoing(this.OutgoingProducer2 = outgoingProducer2);
         this.AddOutgoing(this.OutgoingProducer3 = outgoingProducer3);
+    }
+
+    public override bool SetMonitor(IBCMonitor monitor) {
+        bool result = base.SetMonitor(monitor);
+        if (result) {
+            monitor.Add(this.IncomingConsumer1);
+            monitor.Add(this.IncomingConsumer2);
+            monitor.Add(this.IncomingConsumer3);
+            monitor.Add(this.OutgoingProducer1);
+            monitor.Add(this.OutgoingProducer2);
+            monitor.Add(this.OutgoingProducer3);
+        }
+        return result;
+    }
+
+    public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
+        base.Describe(node, description);
+        node.AddIncoming(this.IncomingConsumer1);
+        node.AddIncoming(this.IncomingConsumer2);
+        node.AddIncoming(this.IncomingConsumer3);
+        node.AddOutgoing(this.OutgoingProducer1);
+        node.AddOutgoing(this.OutgoingProducer2);
+        node.AddOutgoing(this.OutgoingProducer3);
     }
 }
 

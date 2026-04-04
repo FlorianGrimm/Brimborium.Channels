@@ -53,7 +53,7 @@ public sealed class BCOutgoingProducer<T>
     }
 
     public async Task OnNext(T value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnNext")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnNext))) {
             await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
                 foreach (var consumer in this._ListOutgoingConnection) {
@@ -68,7 +68,7 @@ public sealed class BCOutgoingProducer<T>
     }
 
     public async Task OnError(BCError value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnError")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
             await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
                 foreach (var consumer in this._ListOutgoingConnection) {
@@ -83,7 +83,7 @@ public sealed class BCOutgoingProducer<T>
     }
 
     public async Task OnComplete(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
             BCLifeTimeExtension.SetCompleting(ref this._LifeTime);
             if (BCLifeTimeExtension.SetCompleted(ref this._LifeTime)) {
                 await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -103,7 +103,7 @@ public sealed class BCOutgoingProducer<T>
     }
 
     public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.WaitRightCompletedAsync))) {
             foreach (var connection in this._ListOutgoingConnection) {
                 await connection.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
                 await connection.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
@@ -119,5 +119,12 @@ public sealed class BCOutgoingProducer<T>
             }
         }
         return true;
+    }
+
+    public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
+        base.Describe(node, description);
+        foreach (var consumer in this._ListOutgoingConnection) {
+            node.AddOutgoing(consumer);
+        }
     }
 }

@@ -43,20 +43,10 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
     /// <param name="nextConsumer">TODO</param>
     public BCProcessorTracking(
             BCDescription description,
-            //Func<
-            //        BCDescription /*description*/,
-            //        TIn /*Value*/,
-            //        IBCTrackingManager /*TrackingManager*/,
-            //        IBCConsumer<TOut> /*nextConsumer*/,
-            //        TBCTracking
-            //    > createRequest,
-            //Func<TBCTracking, CancellationToken,Task> sendRequest,
             IBCConsumer<BCMessage<TIn, TOut>> nextConsumer
         ) : base(
             description
         ) {
-        //this._CreateRequest = createRequest;
-        //this._SendRequest = sendRequest;
         this.NextDescription = new BCDescription($"{description.Name}-Next");
         this.NextConsumer = nextConsumer;
         BCTrackingManager trackingManager = new(
@@ -82,7 +72,7 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
         CancellationToken cancellationToken);
 
     public virtual async Task OnNext(TIn value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnNext")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnNext))) {
             try {
                 var tracking = this.CreateRequest(value);
                 this.TrackingManager.AddTracking(tracking);
@@ -95,13 +85,13 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
         }
     }
     public virtual async Task OnError(BCError value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnError")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
             await this.NextConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
         }
     }
 
     public virtual async Task OnComplete(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
             if (this.SetCompleting()) {
                 if (this.SetCompleted()) {
                     if (this.TrackingManager.OnComplete()) {
@@ -118,7 +108,7 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
     }
 
     public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.WaitRightCompletedAsync))) {
             await this.NextConsumer.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
             await this.NextConsumer.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -132,83 +122,8 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
         return true;
     }
 
-#if false
-    // Hint
-    // SetMonitor(BCMonitor monitor) 
-    // BCChannelTrackingNext is NextConsumer
-
-    /// <summary>
-    /// Internal consumer placed between this processor and the downstream consumer.
-    /// Routes completed/errored tracking callbacks to the <see cref="BCTrackingManager"/>
-    /// and passes value signals directly to the downstream consumer.
-    /// </summary>
-    protected sealed class BCProcessorTrackingNext
-        : IBCConsumer<TOut>
-        , IBCMonitored{
-        private readonly BCTrackingManager _TrackingManager;
-        private readonly IBCConsumer<TOut> _NextConsumer;
-        private BCMonitor? _Monitor;
-
-        public BCProcessorTrackingNext(
-            BCDescription description,
-            BCTrackingManager trackingManager,
-            IBCConsumer<TOut> nextConsumer
-        ) {
-            this.Description = description;
-            this._TrackingManager = trackingManager;
-            this._NextConsumer = nextConsumer;
-        }
-
-        public BCLifeTime LifeTime => this._TrackingManager.LifeTime;
-
-        public BCDescription Description { get; }
-
-        public async Task OnTrackingComplete(BCTracking<TIn, TOut> tracking, CancellationToken cancellationToken) {
-            await this._TrackingManager.OnTrackingComplete(tracking, cancellationToken);
-        }
-
-        public async Task OnTrackingError(BCTracking<TIn, TOut> tracking, BCError value, CancellationToken cancellationToken) {
-            await this.OnError(value, cancellationToken);
-        }
-
-        public async Task OnComplete(CancellationToken cancellationToken) {
-            using (this._Monitor?.LogEnter(this, "OnComplete")) {
-            await this._TrackingManager.OnComplete(cancellationToken);
-            }
-        }
-
-        public async Task OnError(BCError value, CancellationToken cancellationToken) {
-            using (this._Monitor?.LogEnter(this, "OnError")) {
-                await this._NextConsumer.OnError(value, cancellationToken);
-            }
-        }
-
-        public Task OnNext(TOut value, CancellationToken cancellationToken) {
-            return this._NextConsumer.OnNext(value, cancellationToken);
-        }
-
-        public Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
-            return Task.CompletedTask;
-        }
-
-        public async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
-            using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
-                await this._TrackingManager.WaitSelfCompletedAsync(cancellationToken);
-                await this._NextConsumer.WaitSelfCompletedAsync(cancellationToken);
-
-                await this._TrackingManager.WaitRightCompletedAsync(cancellationToken);
-                await this._NextConsumer.WaitRightCompletedAsync(cancellationToken);
-            }
-        }
-
-        BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-        public bool SetMonitor(BCMonitor monitor) {
-            if (this._Monitor is { }) { return false; }
-            this._Monitor = monitor;
-            return true;
-        }
-
+    public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
+        base.Describe(node, description);
+        node.AddOutgoing(this.NextConsumer);
     }
-
-#endif
 }

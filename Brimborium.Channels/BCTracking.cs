@@ -51,7 +51,6 @@ public class BCTracking<TIn, TOut>
     private static long _NextId;
     internal readonly long Id;
     protected readonly IBCTrackingConsumer<BCTracking<TIn, TOut>, TOut> NextTrackingConsumer;
-    //protected readonly TaskCompletionSource _Completion = new();
 
     /// <summary>
     /// TODO
@@ -79,7 +78,7 @@ public class BCTracking<TIn, TOut>
     public TIn Value { get; }
 
     public async Task OnNext(TOut value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
             await this.NextTrackingConsumer.OnNext(
                 this,
                 value,
@@ -88,19 +87,18 @@ public class BCTracking<TIn, TOut>
     }
 
     public async Task OnComplete(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnComplete")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
             if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
                 BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
                 await this.NextTrackingConsumer.OnComplete(
                     this,
                     cancellationToken);
-                //this._Completion.SetResult();
             }
         }
     }
 
     public async Task OnError(BCError value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, "OnError")) {
+        using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
             await this.NextTrackingConsumer.OnError(
                 this,
                 value,
@@ -109,9 +107,6 @@ public class BCTracking<TIn, TOut>
     }
 
     public override Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
-        //using (this._Monitor?.LogEnter(this, "WaitSelfCompletedAsync")) {
-        //    await this._Completion.Task;
-        //}
         // guess this will never be called
         return Task.CompletedTask;
     }
@@ -119,17 +114,6 @@ public class BCTracking<TIn, TOut>
     public override Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
         // guess this will never be called
         return Task.CompletedTask;
-        //using (this._Monitor?.LogEnter(this, "WaitRightCompletedAsync")) {
-        // not so easy
-        //await this.NextTrackingConsumer.WaitSelfCompletedAsync(
-        //    this,
-        //    cancellationToken).ConfigureAwait(false);
-
-        //await this.NextTrackingConsumer.WaitRightCompletedAsync(
-        //    this,
-        //    cancellationToken).ConfigureAwait(false);
-
-        //}
     }
 
 
@@ -139,5 +123,10 @@ public class BCTracking<TIn, TOut>
             monitor.Add(this.NextTrackingConsumer);
         }
         return true;
+    }
+
+    public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
+        base.Describe(node, description);
+        node.AddOutgoing(this.NextTrackingConsumer);
     }
 }

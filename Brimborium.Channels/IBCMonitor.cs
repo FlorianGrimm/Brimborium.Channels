@@ -10,7 +10,18 @@ public interface IBCMonitor {
 }
 
 /// <summary>Immutable log record produced by <see cref="IBCMonitor"/> for a single named event.</summary>
-public sealed record LogItem(IBCMonitored Part, string Name, string Kind);
+public sealed record BCLogItem(
+    DateTime Timestamp,
+    IBCPart Part, string Name, string Kind
+    ) {
+    public BCLogItem(
+            IBCPart Part, string Name, string Kind
+        ) : this(
+            DateTime.UtcNow,
+            Part, Name, Kind
+        ) {
+    }
+}
 
 /// <summary>
 /// Disposable scope returned by <see cref="IBCMonitor.LogEnter"/>.

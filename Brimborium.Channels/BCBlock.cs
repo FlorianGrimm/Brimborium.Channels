@@ -71,6 +71,13 @@ public class BCBlock
         return true;
     }
 
+    public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
+        node.Kind = "Block";
+        node.Name = this.Description.Name;
+        foreach (var incoming in this.ListIncoming) {
+            description.SetParent(incoming, node);
+        }
+    }
     protected void AddIncoming(IBCConsumer consumer) {
         this._Monitor?.Add(consumer);
     }

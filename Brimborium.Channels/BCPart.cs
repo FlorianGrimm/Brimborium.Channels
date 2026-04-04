@@ -52,6 +52,25 @@ public abstract class BCPart : IBCPart {
     /// <inheritdoc/>
     public BCLifeTime LifeTime => this._LifeTime;
 
+    protected void PreconditionOnSubscribe() {
+        if (BCLifeTime.Completed == this._LifeTime) {
+            throw new BCInvalidStateException($"OnSubscribe {this._LifeTime}");
+        }
+    }
+
+    protected void PreconditionOnNext() {
+        if (BCLifeTime.Completed == this._LifeTime) {
+            throw new BCInvalidStateException($"OnNext {this._LifeTime}");
+        }
+    }
+
+    protected void PreconditionOnError() {
+        if (BCLifeTime.Completed == this._LifeTime) {
+            throw new BCInvalidStateException($"OnError {this._LifeTime}");
+        }
+    }
+
+
     /// <summary>Transitions <see cref="LifeTime"/> from <see cref="BCLifeTime.Active"/> to <see cref="BCLifeTime.Completing"/>.</summary>
     /// <returns><c>true</c> if the transition occurred; <c>false</c> if it was already completing or completed.</returns>
     protected bool SetCompleting() {
@@ -99,5 +118,12 @@ public abstract class BCPartMonitored
         return true;
     }
 
-    public virtual void Describe(BCDescriptionGraph description) { }
+    public virtual void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
+        node.Kind = "Operation";
+        node.Name = this.Description.Name;
+    }
+
+    private string? _NodeId;
+    string? IBCMonitored.GetNodeId() => this._NodeId;
+    void IBCMonitored.SetNodeId(string nodeId) { this._NodeId = nodeId; }
 }
