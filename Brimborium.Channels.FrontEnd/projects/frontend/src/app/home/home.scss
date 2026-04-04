@@ -1,0 +1,52 @@
+.f-flow {
+  height: 400px;
+}
+
+.f-node {
+  padding: 24px;
+  color: rgba(60, 60, 67);
+  text-align: center;
+  background: #ffffff;
+  border-radius: 6px;
+  border: 1px solid rgba(60, 60, 67, 0.28);
+
+  &.f-selected {
+    border-color: var(--connection-color, #3451b2);
+  }
+}
+
+.f-drag-handle {
+  cursor: move;
+}
+
+/**
+ * Connection SVG lives inside the component template,
+ * so styling usually goes through ::ng-deep (or global styles).
+ */
+::ng-deep .f-connection {
+  .f-connection-path {
+    stroke: rgba(60, 60, 67, 0.78);
+    stroke-width: 2;
+    fill: none;
+  }
+
+  /**
+   * Selection overlay makes thin lines easier to click.
+   * Keep it invisible but interactive.
+   */
+  .f-connection-selection {
+    stroke-width: 10;
+  }
+
+  /**
+   * Drag handle is used for pointer detection.
+   * It can be made transparent to avoid visual clutter.
+   */
+  .f-connection-drag-handle {
+    fill: transparent;
+  }
+
+  &.f-selected .f-connection-path {
+    stroke: var(--connection-color, #3451b2);
+  }
+}

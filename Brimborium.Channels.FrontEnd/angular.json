@@ -11,7 +11,8 @@
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
-          "style": "scss"
+          "style": "scss",
+          "node_modules/@foblex/flow/styles/default.scss"
         }
       },
       "root": "projects/frontend",
@@ -95,32 +96,6 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "tsConfig": "projects/brimborium-channels/tsconfig.spec.json"
-          }
-        }
-      }
-    },
-    "webcola": {
-      "projectType": "library",
-      "root": "projects/webcola",
-      "sourceRoot": "projects/webcola/src",
-      "prefix": "lib",
-      "architect": {
-        "build": {
-          "builder": "@angular/build:ng-packagr",
-          "configurations": {
-            "production": {
-              "tsConfig": "projects/webcola/tsconfig.lib.prod.json"
-            },
-            "development": {
-              "tsConfig": "projects/webcola/tsconfig.lib.json"
-            }
-          },
-          "defaultConfiguration": "production"
-        },
-        "test": {
-          "builder": "@angular/build:unit-test",
-          "options": {
-            "tsConfig": "projects/webcola/tsconfig.spec.json"
           }
         }
       }

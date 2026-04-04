@@ -5,6 +5,7 @@
   "compilerOptions": {
     "paths": {
       "brimborium-channels": ["./dist/brimborium-channels"],
+      "ngx-graph": ["./dist/ngx-graph"],
       "webcola": ["./dist/webcola"]
     },
     "strict": true,
@@ -38,12 +39,6 @@
     },
     {
       "path": "./projects/brimborium-channels/tsconfig.spec.json"
-    },
-    {
-      "path": "./projects/webcola/tsconfig.lib.json"
-    },
-    {
-      "path": "./projects/webcola/tsconfig.spec.json"
     }
   ]
 }
