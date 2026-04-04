@@ -25,7 +25,7 @@ public class BCBlockI1O2Tests {
         await block.OutgoingProducer2.Subscribe(sinkDup, ct);
 
         BCSource<int> source = new(new("source"), block.IncomingConsumer1);
-        BCMonitor monitor = new();
+        BCMonitorConsole monitor = new();
         monitor.AddMonitored(source);
 
         await source.OnNextEnumerable([1, 2, 1, 3, 2], ct);
@@ -57,7 +57,7 @@ public class BCBlockI1O2Tests {
         await block.OutgoingProducer2.Subscribe(sinkDup, ct);
 
         BCSource<int> source = new(new("source"), block.IncomingConsumer1);
-        BCMonitor monitor = new();
+        BCMonitorConsole monitor = new();
         monitor.AddMonitored(source);
 
         await source.OnNextEnumerable([5, 5], ct);

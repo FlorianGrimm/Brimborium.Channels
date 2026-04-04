@@ -5,7 +5,7 @@ public class BCBufferTests {
     public async Task BCBufferTest001() {
         CancellationTokenSource cts = new();
         CancellationToken cancellationToken = cts.Token;
-        BCMonitor monitor = new();
+        BCMonitorConsole monitor = new();
 
         BCConsumerListValue<string> sink = new(
             new("sink"));
@@ -62,7 +62,7 @@ public class BCBufferTests {
 
     [Test]
     public async Task BCBuffer_CustomOnComplete_IsInvoked() {
-        BCMonitor monitor = new();
+        BCMonitorConsole monitor = new();
         var ct = CancellationToken.None;
         BCConsumerListValue<string> sink = new(new("sink"));
         bool completeCalled = false;

@@ -111,7 +111,7 @@ public sealed class BCOutgoingProducer<T>
         }
     }
 
-    public override bool SetMonitor(BCMonitor monitor) {
+    public override bool SetMonitor(IBCMonitor monitor) {
         var result = base.SetMonitor(monitor);
         if (result) {
             foreach (var consumer in this._ListOutgoingConnection) {

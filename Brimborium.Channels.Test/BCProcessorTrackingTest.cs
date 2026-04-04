@@ -12,7 +12,7 @@ public class BCProcessorTrackingTest {
     [Test]
     public async Task BCProcessorTrackingTest001() {
         CancellationTokenSource cts = new CancellationTokenSource();
-        BCMonitor monitor = new BCMonitor();
+        BCMonitorConsole monitor = new ();
         BCConsumerListValue<string> sink = new(new("sink"));
         BCDelegate<BCMessage<int, string>, string> transform = new(
             description: new BCDescription("transform"),
@@ -123,7 +123,7 @@ public class BCProcessorTrackingTest {
     [Test]
     public async Task BCProcessorTrackingTest002() {
         CancellationTokenSource cts = new CancellationTokenSource();
-        BCMonitor monitor = new BCMonitor();
+        BCMonitorConsole monitor = new();
         BCConsumerListValue<string> sink = new(new("sink"));
         BCDelegate<BCMessage<int, string>, string> transform = new(
             description: new BCDescription("transform"),

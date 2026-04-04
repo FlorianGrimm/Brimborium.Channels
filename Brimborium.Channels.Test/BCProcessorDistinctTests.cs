@@ -84,7 +84,7 @@ public class BCProcessorDistinctO2Tests {
             sinkFirst,
             sinkDup);
         BCSource<int> source = new(new("source"), sut);
-        BCMonitor monitor = new();
+        BCMonitorConsole monitor = new();
         monitor.AddMonitored(source);
 
         await source.OnNextEnumerable([1, 2, 1, 3, 2], ct);
@@ -109,7 +109,7 @@ public class BCProcessorDistinctO2Tests {
             sinkFirst,
             sinkDup);
         BCSource<int> source = new(new("source"), sut);
-        BCMonitor monitor = new();
+        BCMonitorConsole monitor = new();
         monitor.AddMonitored(source);
 
         await source.OnNextEnumerable([10, 20, 30], ct);

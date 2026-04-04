@@ -18,7 +18,7 @@ public class BCDelegateTests{
                 next: out1));
         await block.OutgoingProducer1.Subscribe(sink, cancellationToken);
         BCSource<int> source = new(new("source"), block.IncomingConsumer1);
-        BCMonitor monitor = new ();
+        BCMonitorConsole monitor = new ();
         monitor.AddMonitored(source);
         await Assert.That(((IBCMonitored)sink).GetMonitor()).IsSameReferenceAs(monitor);
 
@@ -50,7 +50,7 @@ public class BCDelegateTests{
                 next: out1));
         await block.OutgoingProducer1.Subscribe(sink, cancellationToken);
         BCSource<int> source = new(new("source"), block.IncomingConsumer1);
-        BCMonitor monitor = new ();
+        BCMonitorConsole monitor = new ();
         monitor.AddMonitored(source);
         await Assert.That(((IBCMonitored)sink).GetMonitor()).IsSameReferenceAs(monitor);
 

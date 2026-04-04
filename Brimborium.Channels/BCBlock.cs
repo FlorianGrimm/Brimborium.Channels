@@ -3,6 +3,13 @@
 namespace Brimborium.Channels;
 
 /// <summary>
+/// Marker interface for composite pipeline blocks that group
+/// one or more incoming consumers and outgoing producers behind a single unit.
+/// </summary>
+public interface IBCBlock : IBCPart {
+}
+
+/// <summary>
 /// Abstract base class for composite pipeline blocks.
 /// Maintains lists of incoming consumers and outgoing producers,
 /// and coordinates lifetime and monitoring across all of them.
@@ -51,7 +58,7 @@ public class BCBlock
         return BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
     }
 
-    public override bool SetMonitor(BCMonitor monitor) {
+    public override bool SetMonitor(IBCMonitor monitor) {
         var result = base.SetMonitor(monitor);
         if (result) {
             foreach (var incoming in this.ListIncoming) {

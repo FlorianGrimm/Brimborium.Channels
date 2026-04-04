@@ -52,7 +52,7 @@ public abstract class BCProcessorUnsync<TIn, TOut>
         }
     }
 
-    public override bool SetMonitor(BCMonitor monitor) {
+    public override bool SetMonitor(IBCMonitor monitor) {
         var result = base.SetMonitor(monitor);
         if (result) {
             monitor.Add(this.NextConsumer);
@@ -122,7 +122,7 @@ public abstract class BCProcessorUnsyncO2<TIn, TOut1, TOut2>
         }
     }
 
-    public override bool SetMonitor(BCMonitor monitor) {
+    public override bool SetMonitor(IBCMonitor monitor) {
         var result = base.SetMonitor(monitor);
         if (result) {
             monitor.Add(this.NextConsumer1);

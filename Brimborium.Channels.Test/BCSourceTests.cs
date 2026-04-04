@@ -7,7 +7,7 @@ public class BCSourceTests {
         CancellationToken cancellationToken = cts.Token;
         BCConsumerListValue<int> sink = new(new("Sink"));
         BCSource<int> source = new(new("source"), sink);
-        BCMonitor monitor = new ();
+        BCMonitorConsole monitor = new();
         monitor.AddMonitored(source);
         await Assert.That(((IBCMonitored)sink).GetMonitor()).IsSameReferenceAs(monitor);
 

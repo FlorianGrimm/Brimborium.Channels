@@ -72,14 +72,14 @@ public abstract class BCPart : IBCPart {
 }
 
 /// <summary>
-/// Abstract base class for pipeline parts that support monitoring via <see cref="BCMonitor"/>.
+/// Abstract base class for pipeline parts that support monitoring via <see cref="IBCMonitor"/>.
 /// Extends <see cref="BCPart"/> and implements <see cref="IBCMonitored"/>.
 /// </summary>
 public abstract class BCPartMonitored
     : BCPart
     , IBCMonitored {
     /// <summary>The attached monitor, or <c>null</c> if none has been set.</summary>
-    protected BCMonitor? _Monitor;
+    protected IBCMonitor? _Monitor;
 
     /// <param name="description">Human-readable name used in logs and diagnostics.</param>
     protected BCPartMonitored(
@@ -90,12 +90,14 @@ public abstract class BCPartMonitored
     }
 
     /// <inheritdoc/>
-    BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
+    IBCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
 
     /// <inheritdoc/>
-    public virtual bool SetMonitor(BCMonitor monitor) {
+    public virtual bool SetMonitor(IBCMonitor monitor) {
         if (this._Monitor is { }) { return false; }
         this._Monitor = monitor;
         return true;
     }
+
+    public virtual void Describe(BCDescriptionGraph description) { }
 }

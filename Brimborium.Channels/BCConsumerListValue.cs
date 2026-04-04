@@ -84,8 +84,8 @@ public sealed class BCConsumerListValue<T>
         }
     }
 
-    BCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
-    public override bool SetMonitor(BCMonitor monitor) {
+    IBCMonitor? IBCMonitored.GetMonitor() => this._Monitor;
+    public override bool SetMonitor(IBCMonitor monitor) {
         if (this._Monitor is { }) { return false; }
         this._Monitor = monitor;
         // no next consumer

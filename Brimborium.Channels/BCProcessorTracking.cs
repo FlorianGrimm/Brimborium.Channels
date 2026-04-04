@@ -124,7 +124,7 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
         }
     }
 
-    public override bool SetMonitor(BCMonitor monitor) {
+    public override bool SetMonitor(IBCMonitor monitor) {
         var result = base.SetMonitor(monitor);
         if (result) {
             monitor.Add(this.NextConsumer);

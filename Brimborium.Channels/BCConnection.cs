@@ -3,6 +3,20 @@
 namespace Brimborium.Channels;
 
 /// <summary>
+/// Represents a live, typed connection between an <see cref="IBCProducer{T}"/> (left side)
+/// and an <see cref="IBCConsumer{T}"/> (right side).
+/// Acts as a pass-through consumer that forwards signals to the right-side consumer.
+/// </summary>
+/// <typeparam name="T">The type of values flowing through the connection.</typeparam>
+public interface IBCConnection<T> : IBCConsumer<T> {
+    /// <summary>The producer on the left (upstream) side of this connection.</summary>
+    IBCProducer<T> LeftOutgoingProducer { get; }
+
+    /// <summary>The consumer on the right (downstream) side of this connection.</summary>
+    IBCConsumer<T> RightIncomingConsumer { get; }
+}
+
+/// <summary>
 /// Concrete implementation of <see cref="IBCConnection{T}"/>.
 /// Represents the live, typed link between an <see cref="IBCProducer{T}"/> (left side)
 /// and an <see cref="IBCConsumer{T}"/> (right side), forwarding all signals to the right consumer.
@@ -75,7 +89,7 @@ public sealed class BCConnection<T>
         }
     }
 
-    public override bool SetMonitor(BCMonitor monitor) {
+    public override bool SetMonitor(IBCMonitor monitor) {
         var result = base.SetMonitor(monitor);
         if (result) {
             monitor.Add(this.RightIncomingConsumer);
