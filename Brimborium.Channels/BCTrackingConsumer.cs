@@ -2,9 +2,10 @@
 
 namespace Brimborium.Channels;
 
-public class BCTrackingConsumer<TIn, TOut>
+public class BCTrackingConsumer<TIn, TOut, TBCTracking>
     : BCPartMonitored
-    , IBCTrackingConsumer<BCTracking<TIn, TOut>, TOut> {
+    , IBCTrackingConsumer<TBCTracking, TOut>
+    where TBCTracking: IBCTracking, IBCTrackingIn<TIn>, IBCTrackingOut<TOut> {
     private readonly IBCTrackingManager _TrackingManager;
     private readonly IBCConsumer<BCMessage<TIn, TOut>> _NextConsumer;
 
@@ -19,14 +20,14 @@ public class BCTrackingConsumer<TIn, TOut>
         this._NextConsumer = nextConsumer;
     }
 
-    public async Task OnNext(BCTracking<TIn, TOut> tracking, TOut value, CancellationToken cancellationToken) {
+    public async Task OnNext(TBCTracking tracking, TOut value, CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.OnNext))) {
             var message = BCMessage<TIn, TOut>.OnNext(tracking.Value, value);
             await this._NextConsumer.OnNext(message, cancellationToken);
         }
     }
 
-    public async Task OnError(BCTracking<TIn, TOut> tracking, BCError error, CancellationToken cancellationToken) {
+    public async Task OnError(TBCTracking tracking, BCError error, CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
             var message = BCMessage<TIn, TOut>.OnError(tracking.Value, error);
             await this._NextConsumer.OnNext(message, cancellationToken);
@@ -36,7 +37,7 @@ public class BCTrackingConsumer<TIn, TOut>
         }
     }
 
-    public async Task OnComplete(BCTracking<TIn, TOut> tracking, CancellationToken cancellationToken) {
+    public async Task OnComplete(TBCTracking tracking, CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
             var message = BCMessage<TIn, TOut>.OnComplete(tracking.Value);
             await this._NextConsumer.OnNext(message, cancellationToken);
@@ -46,18 +47,6 @@ public class BCTrackingConsumer<TIn, TOut>
             }
         }
     }
-
-    //public Task WaitRightCompletedAsync(BCTracking<TIn, TOut> tracking, CancellationToken cancellationToken) {
-    //    using (this._Monitor?.LogEnter(this, nameof(this.WaitRightCompletedAsync))) {
-    //        throw new NotImplementedException();
-    //    }
-    //}
-
-    //public Task WaitSelfCompletedAsync(BCTracking<TIn, TOut> tracking, CancellationToken cancellationToken) {
-    //    using (this._Monitor?.LogEnter(this, nameof(this.WaitSelfCompletedAsync))) {
-    //        throw new NotImplementedException();
-    //    }
-    //}
 
     public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.WaitSelfCompletedAsync))) {

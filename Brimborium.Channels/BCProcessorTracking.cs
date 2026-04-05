@@ -16,7 +16,7 @@ namespace Brimborium.Channels;
 public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
     : BCPartMonitored
     , IBCConsumer<TIn>
-    where TBCTracking : BCTracking<TIn, TOut> {
+    where TBCTracking : IBCTracking, IBCTrackingIn<TIn>, IBCTrackingOut<TOut> {
     
     protected readonly BCDescription NextDescription;
 
@@ -28,7 +28,7 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
     /// <summary>
     /// NextTrackingConsumer --} NextConsumer
     /// </summary>
-    protected readonly BCTrackingConsumer<TIn, TOut> NextTrackingConsumer;
+    protected readonly IBCTrackingConsumer<TBCTracking, TOut> NextTrackingConsumer;
 
     /// <summary>
     /// Tracks trackings
@@ -55,7 +55,7 @@ public abstract class BCProcessorTracking<TIn, TOut, TBCTracking>
         this.TrackingManager = trackingManager;
 
         var trackingConsumerDescription = new BCDescription($"{description.Name}-TrackingConsumer");
-        this.NextTrackingConsumer = new BCTrackingConsumer<TIn, TOut>(
+        this.NextTrackingConsumer = new BCTrackingConsumer<TIn, TOut, TBCTracking>(
             description: trackingConsumerDescription,
             trackingManager: trackingManager,
             nextConsumer: nextConsumer

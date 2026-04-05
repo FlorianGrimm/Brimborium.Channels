@@ -63,13 +63,13 @@ public class BCTrackingManager
     }
 
     public bool RemoveTracking<TBCTracking>(TBCTracking tracking) where TBCTracking : IBCTracking {
-        if (this._Tracking.TryRemove(tracking.GetId(), out _)) {
-            if (BCLifeTime.Completing == this._LifeTime) {
-                if (this._Tracking.IsEmpty) {
-                    if (this.SetCompleted()) {
-                        this._Completion.SetResult();
-                        return true;
-                    }
+        this._Tracking.TryRemove(tracking.GetId(), out _);
+
+        if (BCLifeTime.Completing == this._LifeTime) {
+            if (this._Tracking.IsEmpty) {
+                if (this.SetCompleted()) {
+                    this._Completion.SetResult();
+                    return true;
                 }
             }
         }

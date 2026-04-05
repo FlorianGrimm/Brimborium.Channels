@@ -44,7 +44,7 @@ public class BCProcessorTrackingTest {
     public class SutProcessorTracking001
         : BCProcessorTracking<int, string, BCTracking<int, string>> {
         private readonly TestWorker001 _Worker;
-        private readonly BCTrackingConsumer<int, string> _TrackingConsumer;
+        private readonly BCTrackingConsumer<int, string, BCTracking<int, string>> _TrackingConsumer;
 
         public SutProcessorTracking001(
                 BCDescription description,
@@ -54,7 +54,7 @@ public class BCProcessorTrackingTest {
                 description, nextConsumer
             ) {
             this._Worker = worker;
-            this._TrackingConsumer = new BCTrackingConsumer<int, string>(
+            this._TrackingConsumer = new BCTrackingConsumer<int, string, BCTracking<int, string>>(
                 description,
                 this.TrackingManager,
                 nextConsumer);
@@ -157,7 +157,7 @@ public class BCProcessorTrackingTest {
     public class SutProcessorTracking002
         : BCProcessorTracking<int, string, BCTracking<int, string>> {
         private readonly TestWorker002 _Worker;
-        private readonly BCTrackingConsumer<int, string> _TrackingConsumer;
+        private readonly BCTrackingConsumer<int, string, BCTracking<int, string>> _TrackingConsumer;
 
         public SutProcessorTracking002(
                 BCDescription description,
@@ -167,7 +167,7 @@ public class BCProcessorTrackingTest {
                 description, nextConsumer
             ) {
             this._Worker = worker;
-            this._TrackingConsumer = new BCTrackingConsumer<int, string>(
+            this._TrackingConsumer = new BCTrackingConsumer<int, string, BCTracking<int, string>>(
                 description,
                 this.TrackingManager,
                 nextConsumer);

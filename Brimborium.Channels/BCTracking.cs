@@ -1,7 +1,5 @@
 #pragma warning disable IDE1006 // Naming Styles
 
-using System.Net.Sockets;
-
 namespace Brimborium.Channels;
 
 /// <summary>Non-generic marker interface for an in-flight tracking unit; exposes its unique id.</summary>
@@ -14,10 +12,14 @@ public interface IBCTracking {
 /// and the non-generic <see cref="IBCTracking"/> id marker.
 /// </summary>
 /// <typeparam name="TOut">The type of output values this tracking unit can receive.</typeparam>
-public interface IBCTracking<TOut>
+public interface IBCTrackingOut<TOut>
     : IBCConsumer<TOut>
     , IBCMonitored
     , IBCTracking {
+}
+public interface IBCTrackingIn<TIn>
+    : IBCTracking {
+    TIn Value { get; }
 }
 
 public interface IBCTrackingConsumer<TBCTracking, TOut>
@@ -31,9 +33,50 @@ public interface IBCTrackingConsumer<TBCTracking, TOut>
     //Task WaitRightCompletedAsync(TBCTracking tracking, CancellationToken cancellationToken);
 }
 
+public interface IBCTracking<TIn, TOut>
+    : IBCTrackingOut<TOut>
+    , IBCTrackingIn<TIn> {
+}
+
+
 //public readonly record struct BCTracking(long Id) : IBCTracking {
 //    public readonly long GetId() => this.Id;
 //}
+
+public abstract class BCTracking
+    : BCPartMonitored
+    , IBCConsumer
+    , IBCTracking {
+    private static long _NextId;
+    internal readonly long Id;
+
+    protected BCTracking(
+            BCDescription description
+        ) : base(
+            description
+        ) {
+        this.Id = System.Threading.Interlocked.Increment(ref _NextId);
+    }
+
+    public long GetId() => this.Id;
+
+    public virtual Task OnError(BCError value, CancellationToken cancellationToken) {
+        return Task.CompletedTask;
+    }
+
+    public virtual Task OnComplete(CancellationToken cancellationToken) {
+        return Task.CompletedTask;
+    }
+
+    public override Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
+        return Task.CompletedTask;
+    }
+
+    public override Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
+        return Task.CompletedTask;
+    }
+
+}
 
 /// <summary>
 /// Represents a single in-flight request created by a tracking processor.
@@ -43,14 +86,13 @@ public interface IBCTrackingConsumer<TBCTracking, TOut>
 /// </summary>
 /// <typeparam name="TIn">The type of the original input value.</typeparam>
 /// <typeparam name="TOut">The type of the output value produced by this tracking unit.</typeparam>
-public class BCTracking<TIn, TOut>
-    : BCPartMonitored
+public abstract class BCTracking<TIn, TOut, TBCTracking>
+    : BCTracking
     , IBCConsumer<TOut>
-    , IBCTracking
-    , IBCTracking<TOut> {
-    private static long _NextId;
-    internal readonly long Id;
-    protected readonly IBCTrackingConsumer<BCTracking<TIn, TOut>, TOut> NextTrackingConsumer;
+    , IBCTrackingOut<TOut>
+    , IBCTrackingIn<TIn>
+    where TBCTracking : IBCTracking {
+    protected readonly IBCTrackingConsumer<TBCTracking, TOut> NextTrackingConsumer;
 
     /// <summary>
     /// TODO
@@ -61,16 +103,15 @@ public class BCTracking<TIn, TOut>
     public BCTracking(
             BCDescription description,
             TIn Value,
-            IBCTrackingConsumer<BCTracking<TIn,TOut>, TOut> nextTrackingConsumer
+            IBCTrackingConsumer<TBCTracking, TOut> nextTrackingConsumer
         ) : base(
             description
         ) {
         this.Value = Value;
         this.NextTrackingConsumer = nextTrackingConsumer;
-        this.Id = System.Threading.Interlocked.Increment(ref _NextId);
     }
 
-    public long GetId() => this.Id;
+    protected abstract TBCTracking GetNextTracking();
 
     /// <summary>
     /// TODO
@@ -80,27 +121,27 @@ public class BCTracking<TIn, TOut>
     public async Task OnNext(TOut value, CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
             await this.NextTrackingConsumer.OnNext(
-                this,
+                this.GetNextTracking(),
                 value,
                 cancellationToken);
         }
     }
 
-    public async Task OnComplete(CancellationToken cancellationToken) {
+    public override async Task OnComplete(CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
-            if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
-                BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
+            this.SetCompleting();
+            if (this.SetCompleted()) {
                 await this.NextTrackingConsumer.OnComplete(
-                    this,
+                    this.GetNextTracking(),
                     cancellationToken);
             }
         }
     }
 
-    public async Task OnError(BCError value, CancellationToken cancellationToken) {
+    public override async Task OnError(BCError value, CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
             await this.NextTrackingConsumer.OnError(
-                this,
+                this.GetNextTracking(),
                 value,
                 cancellationToken);
         }
@@ -129,4 +170,16 @@ public class BCTracking<TIn, TOut>
         base.Describe(node, description);
         node.AddOutgoing(this.NextTrackingConsumer);
     }
+}
+
+public class BCTracking<TIn, TOut>
+    : BCTracking<TIn, TOut, BCTracking<TIn, TOut>> {
+    public BCTracking(
+            BCDescription description, TIn Value, IBCTrackingConsumer<BCTracking<TIn, TOut>, TOut> nextTrackingConsumer
+        ) : base(
+            description, Value, nextTrackingConsumer
+        ) {
+    }
+
+    protected override BCTracking<TIn, TOut> GetNextTracking() => this;
 }
