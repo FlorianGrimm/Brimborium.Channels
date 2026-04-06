@@ -5,7 +5,7 @@ using System.Threading.Channels;
 namespace Brimborium.Channels;
 
 /// <summary>
-/// Abstract processor that wraps each incoming value in a <see cref="BCTracking{TIn,TOut}"/> unit
+/// Abstract processor that wraps each incoming value in a <see cref="BCTrackingO1{TIn,TOut}"/> unit
 /// and dispatches it asynchronously via <c>SendRequest</c> into a channel.
 /// A <see cref="BCTrackingManager"/> keeps count of in-flight trackings and delays the <c>OnComplete</c>
 /// signal to the downstream consumer until all of them have reported back.
@@ -14,7 +14,7 @@ namespace Brimborium.Channels;
 /// </summary>
 /// <typeparam name="TIn">The type of values received from upstream.</typeparam>
 /// <typeparam name="TOut1">The type of values forwarded to the downstream consumer.</typeparam>
-/// <typeparam name="TBCTracking">The concrete <see cref="BCTracking{TIn,TOut}"/> subtype used by this processor.</typeparam>
+/// <typeparam name="TBCTracking">The concrete <see cref="BCTrackingO1{TIn,TOut}"/> subtype used by this processor.</typeparam>
 public abstract class BCProcessorChannelTracking<TIn, TOut1, TBCTracking>
     : BCPartMonitored
     , IBCConsumer<TIn>

@@ -42,7 +42,7 @@ public class BCProcessorTrackingTest {
     }
 
     public class SutProcessorTracking001
-        : BCProcessorTracking<int, string, BCTracking<int, string>> {
+        : BCProcessorTracking<int, string, BCTrackingO1<int, string>> {
         private readonly TestWorker001 _Worker;
 
         public SutProcessorTracking001(
@@ -55,10 +55,10 @@ public class BCProcessorTrackingTest {
             this._Worker = worker;
         }
 
-        protected override BCTracking<int, string> CreateRequest(
+        protected override BCTrackingO1<int, string> CreateRequest(
             int Value
             ) {
-            return new BCTracking<int, string>(
+            return new BCTrackingO1<int, string>(
                 description: this.Description,
                 Value: Value,
                 trackingManager: this.TrackingManager,
@@ -66,20 +66,20 @@ public class BCProcessorTrackingTest {
         }
 
         protected override async Task SendRequest(
-            BCTracking<int, string> tracking,
+            BCTrackingO1<int, string> tracking,
             CancellationToken cancellationToken) {
             await this._Worker.Enqueue(tracking, cancellationToken);
         }
     }
 
     public class TestWorker001 {
-        private readonly Channel<BCTracking<int, string>> _Channel;
+        private readonly Channel<BCTrackingO1<int, string>> _Channel;
         private Task? _TaskRunning;
 
         public TestWorker001() {
-            this._Channel = System.Threading.Channels.Channel.CreateUnbounded<BCTracking<int, string>>();
+            this._Channel = System.Threading.Channels.Channel.CreateUnbounded<BCTrackingO1<int, string>>();
         }
-        public async Task Enqueue(BCTracking<int, string> value, CancellationToken cancellationToken) {
+        public async Task Enqueue(BCTrackingO1<int, string> value, CancellationToken cancellationToken) {
             await this._Channel.Writer.WriteAsync(value, cancellationToken);
 
             if (this._TaskRunning is null) {
@@ -151,7 +151,7 @@ public class BCProcessorTrackingTest {
     // --- 002 ---
 
     public class SutProcessorTracking002
-        : BCProcessorTracking<int, string, BCTracking<int, string>> {
+        : BCProcessorTracking<int, string, BCTrackingO1<int, string>> {
         private readonly TestWorker002 _Worker;
 
         public SutProcessorTracking002(
@@ -164,10 +164,10 @@ public class BCProcessorTrackingTest {
             this._Worker = worker;
         }
 
-        protected override BCTracking<int, string> CreateRequest(
+        protected override BCTrackingO1<int, string> CreateRequest(
             int Value
             ) {
-            return new BCTracking<int, string>(
+            return new BCTrackingO1<int, string>(
                 description: this.Description,
                 Value: Value,
                 trackingManager: this.TrackingManager,
@@ -175,20 +175,20 @@ public class BCProcessorTrackingTest {
         }
 
         protected override async Task SendRequest(
-            BCTracking<int, string> tracking,
+            BCTrackingO1<int, string> tracking,
             CancellationToken cancellationToken) {
             await this._Worker.Enqueue(tracking, cancellationToken);
         }
     }
 
     public class TestWorker002 {
-        private readonly Channel<BCTracking<int, string>> _Channel;
+        private readonly Channel<BCTrackingO1<int, string>> _Channel;
         private Task? _TaskRunning;
 
         public TestWorker002() {
-            this._Channel = System.Threading.Channels.Channel.CreateUnbounded<BCTracking<int, string>>();
+            this._Channel = System.Threading.Channels.Channel.CreateUnbounded<BCTrackingO1<int, string>>();
         }
-        public async Task Enqueue(BCTracking<int, string> value, CancellationToken cancellationToken) {
+        public async Task Enqueue(BCTrackingO1<int, string> value, CancellationToken cancellationToken) {
             await this._Channel.Writer.WriteAsync(value, cancellationToken);
 
             if (this._TaskRunning is null) {
@@ -214,7 +214,7 @@ public class BCProcessorTrackingTest {
                 }
             }
 
-            static async void Handle(BCTracking<int, string> tracking, CancellationToken cancellationToken) {
+            static async void Handle(BCTrackingO1<int, string> tracking, CancellationToken cancellationToken) {
                 System.Console.Out.WriteLine($"Workter002:{tracking.Value}:Start");
                 foreach (var i in System.Linq.Enumerable.Range(0, tracking.Value)) {
                     await tracking.OnNext1(i.ToString(), cancellationToken);

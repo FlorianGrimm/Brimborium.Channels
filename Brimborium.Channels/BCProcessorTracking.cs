@@ -5,7 +5,7 @@ using System.Diagnostics;
 namespace Brimborium.Channels;
 
 /// <summary>
-/// Abstract processor that wraps each incoming value in a <see cref="BCTracking{TIn,TOut}"/> unit
+/// Abstract processor that wraps each incoming value in a <see cref="BCTrackingO1{TIn,TOut}"/> unit
 /// and dispatches it asynchronously via <c>SendRequest</c>.
 /// A <see cref="BCTrackingManager"/> keeps count of in-flight trackings and delays the <c>OnComplete</c>
 /// signal to the downstream consumer until all of them have reported back.
