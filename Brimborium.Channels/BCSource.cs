@@ -26,7 +26,7 @@ public sealed class BCSource<T>
 
     public async Task OnComplete(CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
-            await this._Semaphore.WaitAsync(cancellationToken);
+            await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
                 BCLifeTimeExtension.SetCompleting(ref this._LifeTime);
                 if (BCLifeTimeExtension.SetCompleted(ref this._LifeTime)) {
@@ -40,7 +40,7 @@ public sealed class BCSource<T>
 
     public async Task OnError(BCError value, CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
-            await this._Semaphore.WaitAsync(cancellationToken);
+            await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
             await this.NextConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
             } finally {
@@ -51,7 +51,7 @@ public sealed class BCSource<T>
 
     public async Task OnNext(T value, CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.OnNext))) {
-            await this._Semaphore.WaitAsync(cancellationToken);
+            await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
             await this.NextConsumer.OnNext(value, cancellationToken).ConfigureAwait(false);
             } finally {
@@ -61,7 +61,7 @@ public sealed class BCSource<T>
     }
 
     public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
-        await this._Semaphore.WaitAsync(cancellationToken);
+        await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
         this._Semaphore.Release();
     }
 

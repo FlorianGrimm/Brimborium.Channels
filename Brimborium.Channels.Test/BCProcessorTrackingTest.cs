@@ -44,7 +44,6 @@ public class BCProcessorTrackingTest {
     public class SutProcessorTracking001
         : BCProcessorTracking<int, string, BCTracking<int, string>> {
         private readonly TestWorker001 _Worker;
-        private readonly BCTrackingConsumer<int, string, BCTracking<int, string>> _TrackingConsumer;
 
         public SutProcessorTracking001(
                 BCDescription description,
@@ -54,10 +53,6 @@ public class BCProcessorTrackingTest {
                 description, nextConsumer
             ) {
             this._Worker = worker;
-            this._TrackingConsumer = new BCTrackingConsumer<int, string, BCTracking<int, string>>(
-                description,
-                this.TrackingManager,
-                nextConsumer);
         }
 
         protected override BCTracking<int, string> CreateRequest(
@@ -66,7 +61,8 @@ public class BCProcessorTrackingTest {
             return new BCTracking<int, string>(
                 description: this.Description,
                 Value: Value,
-                nextTrackingConsumer: this.NextTrackingConsumer);
+                trackingManager: this.TrackingManager,
+                nextConsumer1: this.NextConsumer);
         }
 
         protected override async Task SendRequest(
@@ -107,7 +103,7 @@ public class BCProcessorTrackingTest {
                 while (reader.TryRead(out var tracking)) {
                     System.Console.Out.WriteLine($"Workter001:{tracking.Value}:Start");
                     foreach (var i in System.Linq.Enumerable.Range(0, tracking.Value)) {
-                        await tracking.OnNext(i.ToString(), cancellationToken);
+                        await tracking.OnNext1(i.ToString(), cancellationToken);
                         await Task.Delay(((i%10)+1)*10).ConfigureAwait(false);
                     }
                     await tracking.OnComplete(cancellationToken);
@@ -157,7 +153,6 @@ public class BCProcessorTrackingTest {
     public class SutProcessorTracking002
         : BCProcessorTracking<int, string, BCTracking<int, string>> {
         private readonly TestWorker002 _Worker;
-        private readonly BCTrackingConsumer<int, string, BCTracking<int, string>> _TrackingConsumer;
 
         public SutProcessorTracking002(
                 BCDescription description,
@@ -167,10 +162,6 @@ public class BCProcessorTrackingTest {
                 description, nextConsumer
             ) {
             this._Worker = worker;
-            this._TrackingConsumer = new BCTrackingConsumer<int, string, BCTracking<int, string>>(
-                description,
-                this.TrackingManager,
-                nextConsumer);
         }
 
         protected override BCTracking<int, string> CreateRequest(
@@ -179,7 +170,8 @@ public class BCProcessorTrackingTest {
             return new BCTracking<int, string>(
                 description: this.Description,
                 Value: Value,
-                nextTrackingConsumer: this.NextTrackingConsumer);
+                trackingManager: this.TrackingManager,
+                nextConsumer1: this.NextConsumer);
         }
 
         protected override async Task SendRequest(
@@ -225,7 +217,7 @@ public class BCProcessorTrackingTest {
             static async void Handle(BCTracking<int, string> tracking, CancellationToken cancellationToken) {
                 System.Console.Out.WriteLine($"Workter002:{tracking.Value}:Start");
                 foreach (var i in System.Linq.Enumerable.Range(0, tracking.Value)) {
-                    await tracking.OnNext(i.ToString(), cancellationToken);
+                    await tracking.OnNext1(i.ToString(), cancellationToken);
                     await Task.Delay(((i % 10) + 1) * 10).ConfigureAwait(false);
                 }
                 await tracking.OnComplete(cancellationToken);

@@ -1,84 +1,6 @@
 #pragma warning disable IDE1006 // Naming Styles
 
-using System.Runtime.CompilerServices;
-
 namespace Brimborium.Channels;
-
-/// <summary>
-/// Abstract base class for single-output processors that serialise all incoming signals
-/// (OnNext, OnError, OnComplete) through a <see cref="SemaphoreSlim"/> before forwarding to the next consumer.
-/// </summary>
-/// <typeparam name="TIn">The type of values received from upstream.</typeparam>
-/// <typeparam name="TOut">The type of values forwarded to the downstream consumer.</typeparam>
-public abstract class BCProcessorSynced<TIn, TOut>
-    : BCPartMonitored
-    , IBCConsumer<TIn> {
-    protected readonly IBCConsumer<TOut> NextConsumer;
-    protected readonly SemaphoreSlim _Semaphore = new(1, 1);
-
-    public BCProcessorSynced(
-            BCDescription description,
-            IBCConsumer<TOut> next
-        ) : base(
-            description
-        ) {
-        this.NextConsumer = next;
-    }
-
-    // public Task OnSubscripe(IBCConnection<TIn> connection, CancellationToken cancellationToken) {
-    //     throw new NotSupportedException();
-    // }
-
-    public abstract Task OnNext(TIn value, CancellationToken cancellationToken);
-
-    public virtual async Task OnError(BCError value, CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
-            await this._Semaphore.WaitAsync(cancellationToken);
-            try {
-                await this.NextConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
-            } finally {
-                this._Semaphore.Release();
-            }
-        }
-    }
-
-    public virtual async Task OnComplete(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
-            if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
-                BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
-                await this.NextConsumer.OnComplete(cancellationToken).ConfigureAwait(false);
-            }
-        }
-    }
-
-    public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, nameof(this.WaitSelfCompletedAsync))) {
-            await this._Semaphore.WaitAsync(cancellationToken);
-            this._Semaphore.Release();
-        }
-    }
-
-    public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
-        using (this._Monitor?.LogEnter(this, nameof(this.WaitRightCompletedAsync))) {
-            await this.NextConsumer.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
-            await this.NextConsumer.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
-        }
-    }
-
-    public override bool SetMonitor(IBCMonitor monitor) {
-        if (this._Monitor is { }) { return false; }
-        this._Monitor = monitor;
-        monitor.Add(this.NextConsumer);
-        return true;
-    }
-
-    public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
-        base.Describe(node, description);
-        node.AddOutgoing(this.NextConsumer);
-    }
-}
-
-
 
 /// <summary>
 /// Abstract base class for dual-output processors that serialise all incoming signals
@@ -87,14 +9,14 @@ public abstract class BCProcessorSynced<TIn, TOut>
 /// <typeparam name="TIn">The type of values received from upstream.</typeparam>
 /// <typeparam name="TOut1">The type of values forwarded to the first downstream consumer.</typeparam>
 /// <typeparam name="TOut2">The type of values forwarded to the second downstream consumer.</typeparam>
-public abstract class BCProcessorSyncedO2<TIn, TOut1, TOut2>
+public abstract class BCProcessorSyncedI1O2<TIn, TOut1, TOut2>
     : BCPartMonitored
     , IBCConsumer<TIn> {
     protected readonly IBCConsumer<TOut1> NextConsumer1;
     protected readonly IBCConsumer<TOut2> NextConsumer2;
     protected readonly SemaphoreSlim _Semaphore = new(1, 1);
 
-    public BCProcessorSyncedO2(
+    public BCProcessorSyncedI1O2(
             BCDescription description,
             IBCConsumer<TOut1> nextConsumer1,
             IBCConsumer<TOut2> nextConsumer2
@@ -113,7 +35,7 @@ public abstract class BCProcessorSyncedO2<TIn, TOut1, TOut2>
 
     public virtual async Task OnError(BCError value, CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
-            await this._Semaphore.WaitAsync(cancellationToken);
+            await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
                 await this.NextConsumer1.OnError(value, cancellationToken).ConfigureAwait(false);
                 await this.NextConsumer2.OnError(value, cancellationToken).ConfigureAwait(false);
@@ -125,8 +47,8 @@ public abstract class BCProcessorSyncedO2<TIn, TOut1, TOut2>
 
     public virtual async Task OnComplete(CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
-            if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
-                BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
+            this.SetCompleting();
+            if (this.SetCompleted()) {
                 await this.NextConsumer1.OnComplete(cancellationToken).ConfigureAwait(false);
                 await this.NextConsumer2.OnComplete(cancellationToken).ConfigureAwait(false);
             }
@@ -135,7 +57,7 @@ public abstract class BCProcessorSyncedO2<TIn, TOut1, TOut2>
 
     public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.WaitSelfCompletedAsync))) {
-            await this._Semaphore.WaitAsync(cancellationToken);
+            await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             this._Semaphore.Release();
         }
     }

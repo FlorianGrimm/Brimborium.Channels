@@ -55,7 +55,7 @@ public sealed class BCConnection<T>
 
     public async Task OnNext(T value, CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.OnNext))) {
-            await this._Semaphore.WaitAsync(cancellationToken);
+            await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
                 await this.RightIncomingConsumer.OnNext(value, cancellationToken).ConfigureAwait(false);
             } finally {
@@ -66,7 +66,7 @@ public sealed class BCConnection<T>
 
     public async Task OnError(BCError value, CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
-            await this._Semaphore.WaitAsync(cancellationToken);
+            await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
             await this.RightIncomingConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
             } finally {
@@ -79,7 +79,7 @@ public sealed class BCConnection<T>
         using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
             if (this.SetCompleting()) {
                 if (this.SetCompleted()) {
-                    await this._Semaphore.WaitAsync(cancellationToken);
+                    await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
                     try {
                         await this.RightIncomingConsumer.OnComplete(cancellationToken).ConfigureAwait(false);
                     } finally {
@@ -92,7 +92,7 @@ public sealed class BCConnection<T>
 
     // not used
     public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
-        await this._Semaphore.WaitAsync(cancellationToken);
+        await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
         this._Semaphore.Release();
     }
 

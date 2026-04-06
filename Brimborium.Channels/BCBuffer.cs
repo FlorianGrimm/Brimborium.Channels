@@ -13,13 +13,12 @@ namespace Brimborium.Channels;
 /// <typeparam name="TIn">The type of values received from upstream.</typeparam>
 /// <typeparam name="TOut">The type of values forwarded to the downstream consumer.</typeparam>
 public sealed class BCBuffer<TIn, TOut>
-    : BCProcessorUnsync<TIn, TOut> {
+    : BCProcessorSyncedI1O1<TIn, TOut> {
     private readonly Func<TIn, IBCConsumer<TOut>, CancellationToken, Task> _OnNext;
     private readonly Func<BCError, IBCConsumer<TOut>, CancellationToken, Task>? _OnError;
     private readonly Func<IBCConsumer<TOut>, CancellationToken, Task>? _OnComplete;
     private readonly Channel<TIn> _Channel;
     private Task? _TaskExecution;
-    private readonly SemaphoreSlim _Semaphore = new(1, 1);
 
     /// <summary>
     /// TODO
@@ -55,7 +54,7 @@ public sealed class BCBuffer<TIn, TOut>
     /// <returns></returns>
     public override async Task OnNext(TIn value, CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.OnNext))) {
-            await this._Semaphore.WaitAsync(cancellationToken);
+            await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
                 await this._Channel.Writer.WriteAsync(value, cancellationToken);
 
@@ -80,7 +79,7 @@ public sealed class BCBuffer<TIn, TOut>
     /// <returns></returns>
     public override async Task OnError(BCError value, CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
-            await this._Semaphore.WaitAsync(cancellationToken);
+            await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
                 if (this._OnError is { } onError) {
                     await onError(value, this.NextConsumer, cancellationToken).ConfigureAwait(false);
@@ -104,7 +103,7 @@ public sealed class BCBuffer<TIn, TOut>
     /// <returns></returns>
     public override async Task OnComplete(CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
-            await this._Semaphore.WaitAsync(cancellationToken);
+            await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
                 if (this.SetCompleting()) {
                     this._Channel.Writer.Complete(default);
@@ -125,7 +124,7 @@ public sealed class BCBuffer<TIn, TOut>
     /// <returns></returns>
     public override async Task WaitSelfCompletedAsync(CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.WaitSelfCompletedAsync))) {
-            await this._Semaphore.WaitAsync(cancellationToken);
+            await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
                 this.StartExecution(cancellationToken);
             } finally {

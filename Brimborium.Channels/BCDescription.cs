@@ -14,4 +14,8 @@ public record class BCDescription(
         Name: string.Empty
     ) {
     }
+
+    public static implicit operator BCDescription(string Name)
+        => new(Name);
+
 };

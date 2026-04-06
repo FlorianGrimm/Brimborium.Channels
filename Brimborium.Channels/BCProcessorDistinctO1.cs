@@ -18,7 +18,7 @@ public record struct BCDistinctValue<T>(T Value, bool First);
 /// <typeparam name="TValue">The type of values received from upstream.</typeparam>
 /// <typeparam name="TKey">The type of the key used to identify duplicates.</typeparam>
 public sealed class BCProcessorDistinctO1<TValue, TKey>
-    : BCProcessorSynced<TValue, BCDistinctValue<TValue>>
+    : BCProcessorSyncedI1O1<TValue, BCDistinctValue<TValue>>
     , IBCMonitored
     where TKey : notnull {
     private readonly Func<TValue, TKey> _GetKey;

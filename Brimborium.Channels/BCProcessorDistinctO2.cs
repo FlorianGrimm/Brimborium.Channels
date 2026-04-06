@@ -12,7 +12,7 @@ namespace Brimborium.Channels;
 /// <typeparam name="TValue">The type of values received from upstream.</typeparam>
 /// <typeparam name="TKey">The type of the key used to identify duplicates.</typeparam>
 public sealed class BCProcessorDistinctO2<TValue, TKey>
-    : BCProcessorSyncedO2<TValue, TValue, TValue>
+    : BCProcessorSyncedI1O2<TValue, TValue, TValue>
     where TKey : notnull {
     private readonly ConcurrentDictionary<TKey, TKey> _SeenBefore;
     private readonly Func<TValue, TKey> _GetKey;
@@ -34,7 +34,7 @@ public sealed class BCProcessorDistinctO2<TValue, TKey>
 
     public override async Task OnNext(TValue value, CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.OnNext))) {
-            await this._Semaphore.WaitAsync(cancellationToken);
+            await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
                 var key = this._GetKey(value);
                 if (this._SeenBefore.TryAdd(key, key)) {

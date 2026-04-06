@@ -2,29 +2,24 @@
 
 namespace Brimborium.Channels;
 
-/// <summary>
-/// A processor that applies caller-supplied delegates for <c>OnNext</c>,
-/// and optionally <c>OnError</c> and <c>OnComplete</c>.
-/// All calls are serialised through a semaphore (inherits <see cref="BCProcessorSyncedI1O1{TIn,TOut}"/>).
-/// </summary>
-/// <typeparam name="TIn">The type of values received from upstream.</typeparam>
-/// <typeparam name="TOut">The type of values forwarded to the downstream consumer.</typeparam>
-public sealed class BCDelegate<TIn, TOut>
-    : BCProcessorSyncedI1O1<TIn, TOut>
+public sealed class BCDelegateI1O2<TIn, TOut1, TOut2>
+    : BCProcessorSyncedI1O2<TIn, TOut1, TOut2>
     , IBCMonitored {
-    private readonly Func<TIn, IBCConsumer<TOut>, CancellationToken, Task> _onNext;
-    private readonly Func<BCError, IBCConsumer<TOut>, CancellationToken, Task>? _OnError;
-    private readonly Func<IBCConsumer<TOut>, CancellationToken, Task>? _OnComplete;
+    private readonly Func<TIn, IBCConsumer<TOut1>, IBCConsumer<TOut2>, CancellationToken, Task> _onNext;
+    private readonly Func<BCError, IBCConsumer<TOut1>, IBCConsumer<TOut2>, CancellationToken, Task>? _OnError;
+    private readonly Func<IBCConsumer<TOut1>, IBCConsumer<TOut2>, CancellationToken, Task>? _OnComplete;
 
-    public BCDelegate(
+    public BCDelegateI1O2(
             BCDescription description,
-            Func<TIn, IBCConsumer<TOut>, CancellationToken, Task> onNext,
-            Func<BCError, IBCConsumer<TOut>, CancellationToken, Task>? onError,
-            Func<IBCConsumer<TOut>, CancellationToken, Task>? onComplete,
-            IBCConsumer<TOut> next
+            Func<TIn, IBCConsumer<TOut1>, IBCConsumer<TOut2>, CancellationToken, Task> onNext,
+            Func<BCError, IBCConsumer<TOut1>, IBCConsumer<TOut2>, CancellationToken, Task>? onError,
+            Func<IBCConsumer<TOut1>, IBCConsumer<TOut2>, CancellationToken, Task>? onComplete,
+            IBCConsumer<TOut1> nextConsumer1,
+            IBCConsumer<TOut2> nextConsumer2
         ) : base(
             description,
-            next
+            nextConsumer1,
+            nextConsumer2
         ) {
         this._onNext = onNext;
         this._OnError = onError;
@@ -35,7 +30,7 @@ public sealed class BCDelegate<TIn, TOut>
         try {
             await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
-                await this._onNext(value, this.NextConsumer, cancellationToken).ConfigureAwait(false);
+                await this._onNext(value, this.NextConsumer1, this.NextConsumer2, cancellationToken).ConfigureAwait(false);
             } finally {
                 this._Semaphore.Release();
             }
@@ -52,7 +47,7 @@ public sealed class BCDelegate<TIn, TOut>
                 if (this._OnError is { } onError) {
                     await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
                     try {
-                        await onError(value, this.NextConsumer, cancellationToken).ConfigureAwait(false);
+                        await onError(value, this.NextConsumer1, this.NextConsumer2, cancellationToken).ConfigureAwait(false);
                     } finally {
                         this._Semaphore.Release();
                     }
@@ -74,9 +69,10 @@ public sealed class BCDelegate<TIn, TOut>
                 if (this.SetCompleting()) {
                     this.SetCompleted();
                     if (this._OnComplete is { } onComplete) {
-                        await onComplete(this.NextConsumer, cancellationToken);
+                        await onComplete(this.NextConsumer1, this.NextConsumer2, cancellationToken);
                     }
-                    await this.NextConsumer.OnComplete(cancellationToken).ConfigureAwait(false);
+                    await this.NextConsumer1.OnComplete(cancellationToken).ConfigureAwait(false);
+                    await this.NextConsumer2.OnComplete(cancellationToken).ConfigureAwait(false);
                 }
             } finally {
                 this._Semaphore.Release();

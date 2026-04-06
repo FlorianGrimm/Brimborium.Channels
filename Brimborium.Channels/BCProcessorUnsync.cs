@@ -34,8 +34,8 @@ public abstract class BCProcessorUnsync<TIn, TOut>
 
     public virtual async Task OnComplete(CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
-            if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
-                BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
+            this.SetCompleting();
+            if (this.SetCompleted()) {
                 await this.NextConsumer.OnComplete(cancellationToken).ConfigureAwait(false);
             }
         }
@@ -47,8 +47,9 @@ public abstract class BCProcessorUnsync<TIn, TOut>
 
     public override async Task WaitRightCompletedAsync(CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.WaitRightCompletedAsync))) {
-            await this.NextConsumer.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
             await this.NextConsumer.WaitSelfCompletedAsync(cancellationToken).ConfigureAwait(false);
+
+            await this.NextConsumer.WaitRightCompletedAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -106,8 +107,8 @@ public abstract class BCProcessorUnsyncO2<TIn, TOut1, TOut2>
 
     public virtual async Task OnComplete(CancellationToken cancellationToken) {
         using (this._Monitor?.LogEnter(this, nameof(this.OnComplete))) {
-            if (BCLifeTimeExtension.SetCompleting(ref this._LifeTime)) {
-                BCLifeTimeExtension.SetCompleted(ref this._LifeTime);
+            this.SetCompleting();
+            if (this.SetCompleted()) {
                 await this.NextConsumer1.OnComplete(cancellationToken).ConfigureAwait(false);
                 await this.NextConsumer2.OnComplete(cancellationToken).ConfigureAwait(false);
             }
