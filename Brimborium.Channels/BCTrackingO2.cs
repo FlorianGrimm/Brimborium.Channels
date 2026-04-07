@@ -16,8 +16,8 @@ public class BCTrackingO2<TIn, TOut1, TOut2>
     , IBCTrackingIn<TIn> {
     private readonly SemaphoreSlim _Semaphore = new(1, 1);
     private readonly IBCTrackingManager _TrackingManager;
-    private readonly IBCConsumer<BCMessage<TIn, TOut1>> NextConsumer1;
-    private readonly IBCConsumer<BCMessage<TIn, TOut2>> NextConsumer2;
+    protected readonly IBCConsumer<BCMessage<TIn, TOut1>> NextConsumer1;
+    protected readonly IBCConsumer<BCMessage<TIn, TOut2>> NextConsumer2;
 
     public BCTrackingO2(
             BCDescription description,

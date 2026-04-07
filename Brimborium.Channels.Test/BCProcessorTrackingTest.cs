@@ -42,7 +42,7 @@ public class BCProcessorTrackingTest {
     }
 
     public class SutProcessorTracking001
-        : BCProcessorTracking<int, string, BCTrackingO1<int, string>> {
+        : BCProcessorTrackingO1<int, int, string, BCTrackingO1<int, string>> {
         private readonly TestWorker001 _Worker;
 
         public SutProcessorTracking001(
@@ -62,7 +62,7 @@ public class BCProcessorTrackingTest {
                 description: this.Description,
                 Value: Value,
                 trackingManager: this.TrackingManager,
-                nextConsumer1: this.NextConsumer);
+                nextConsumer1: this.NextConsumer1);
         }
 
         protected override async Task SendRequest(
@@ -151,7 +151,7 @@ public class BCProcessorTrackingTest {
     // --- 002 ---
 
     public class SutProcessorTracking002
-        : BCProcessorTracking<int, string, BCTrackingO1<int, string>> {
+        : BCProcessorTrackingO1<int, int, string, BCTrackingO1<int, string>> {
         private readonly TestWorker002 _Worker;
 
         public SutProcessorTracking002(
@@ -171,7 +171,7 @@ public class BCProcessorTrackingTest {
                 description: this.Description,
                 Value: Value,
                 trackingManager: this.TrackingManager,
-                nextConsumer1: this.NextConsumer);
+                nextConsumer1: this.NextConsumer1);
         }
 
         protected override async Task SendRequest(
