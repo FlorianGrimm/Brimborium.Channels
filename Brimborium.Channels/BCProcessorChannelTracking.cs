@@ -113,7 +113,7 @@ public abstract class BCProcessorChannelTracking<TIn, TOut1, TBCTracking>
 
     public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
         base.Describe(node, description);
-        node.AddOutgoing(this.NextConsumer);
+        node.AddOutgoing("Next", this.NextConsumer);
     }
 }
 
@@ -223,7 +223,7 @@ public abstract class BCProcessorChannelTracking<TIn, TOut1, TOut2, TBCTracking>
 
     public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
         base.Describe(node, description);
-        node.AddOutgoing(this.NextConsumer1);
-        node.AddOutgoing(this.NextConsumer2);
+        node.AddOutgoing("Next1", this.NextConsumer1);
+        node.AddOutgoing("Next2", this.NextConsumer2);
     }
 }

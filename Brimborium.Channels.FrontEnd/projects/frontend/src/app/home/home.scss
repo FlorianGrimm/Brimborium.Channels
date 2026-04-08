@@ -1,5 +1,17 @@
+:host {
+    display: block;
+    width: 100vw;
+    height: 100vw;
+}
+
 .f-flow {
-  height: 400px;
+    width: 100vw;
+    height: 100vw;
+}
+
+.f-component{
+  border: 1px solid black;
+  border-radius: 10px;
 }
 
 .f-node {

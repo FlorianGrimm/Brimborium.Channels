@@ -1,5 +1,15 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="Brimborium.Channels.FrontEnd/Brimborium.Channels.FrontEnd.csproj" />
   <Project Path="Brimborium.Channels.Sample/Brimborium.Channels.Sample.csproj" />
   <Project Path="Brimborium.Channels.Test/Brimborium.Channels.Test.csproj" />
+  <Project Path="Brimborium.Channels.Web/Brimborium.Channels.Web.csproj" Id="62b3c60e-8c9b-44b3-bd5c-a81d5c150327" />
+  <Project Path="Brimborium.Channels.WebApplication/Brimborium.Channels.WebApplication.csproj" Id="22793a2f-5798-48cc-9ef1-9a0931122b30" />
   <Project Path="Brimborium.Channels/Brimborium.Channels.csproj" />
 </Solution>

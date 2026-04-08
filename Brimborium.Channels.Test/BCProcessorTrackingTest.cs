@@ -12,7 +12,7 @@ public class BCProcessorTrackingTest {
     [Test]
     public async Task BCProcessorTrackingTest001() {
         CancellationTokenSource cts = new CancellationTokenSource();
-        BCMonitorConsole monitor = new ();
+        BCMonitorConsole monitor = new();
         BCConsumerListValue<string> sink = new(new("sink"));
         BCDelegate<BCMessage<int, string>, string> transform = new(
             description: new BCDescription("transform"),
@@ -104,7 +104,7 @@ public class BCProcessorTrackingTest {
                     System.Console.Out.WriteLine($"Workter001:{tracking.Value}:Start");
                     foreach (var i in System.Linq.Enumerable.Range(0, tracking.Value)) {
                         await tracking.OnNext1(i.ToString(), cancellationToken);
-                        await Task.Delay(((i%10)+1)*10).ConfigureAwait(false);
+                        await Task.Delay(((i % 10) + 1) * 10).ConfigureAwait(false);
                     }
                     await tracking.OnComplete(cancellationToken);
                     System.Console.Out.WriteLine($"Workter001:{tracking.Value}:End");
@@ -224,6 +224,35 @@ public class BCProcessorTrackingTest {
                 System.Console.Out.WriteLine($"Workter002:{tracking.Value}:End");
             }
         }
+    }
+
+    [Test]
+    public async Task Describe003() {
+        CancellationTokenSource cts = new CancellationTokenSource();
+        BCMonitorToLogItem monitor = new();
+        BCConsumerListValue<string> sink = new(new("sink"));
+        BCDelegate<BCMessage<int, string>, string> transform = new(
+            description: new BCDescription("transform"),
+            onNext: async (message, next, cancellationToken) => {
+                if (message.TryGetOnNext(out var value)) {
+                    await next.OnNext($"{message.Parameter}-{value}", cancellationToken);
+                }
+            },
+            onError: default,
+            onComplete: default,
+            next: sink);
+        SutProcessorTracking002 sut = new(new("sut"), new(), transform);
+        BCSource<int> source = new(new("source"), sut);
+        monitor.Add(source);
+        var graph = monitor.Describe();
+
+        await source.OnNext(10, cts.Token);
+        await source.OnNext(30, cts.Token);
+        await source.OnComplete(cts.Token);
+        await source.WaitRightCompletedAsync(cts.Token);
+
+        var listLogItem = monitor.GetListLogItem();
+        await Assert.That(listLogItem).Count().IsGreaterThan(0);
     }
 
 }

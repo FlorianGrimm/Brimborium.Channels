@@ -21,8 +21,8 @@ public interface IBCMonitored : IBCPart {
     /// Set information to node.
     /// </summary>
     /// <param name="node"></param>
-    /// <param name="description"></param>
-    void Describe(BCDescriptionNode node, BCDescriptionGraph description);
+    /// <param name="descriptionGraph"></param>
+    void Describe(BCDescriptionNode node, BCDescriptionGraph descriptionGraph);
 
     /// <summary>
     /// NodeId of BCDescriptionNode

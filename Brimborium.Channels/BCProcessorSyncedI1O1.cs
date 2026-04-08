@@ -74,6 +74,6 @@ public abstract class BCProcessorSyncedI1O1<TIn, TOut>
 
     public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
         base.Describe(node, description);
-        node.AddOutgoing(this.NextConsumer);
+        node.AddOutgoing("Next", this.NextConsumer);
     }
 }

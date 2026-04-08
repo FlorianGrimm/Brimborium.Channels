@@ -104,6 +104,6 @@ public class BCTrackingO1<TIn, TOut1>
 
     public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
         base.Describe(node, description);
-        node.AddOutgoing(this.NextConsumer1);
+        node.AddOutgoing("Next1", this.NextConsumer1);
     }
 }

@@ -123,8 +123,9 @@ public sealed class BCOutgoingProducer<T>
 
     public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
         base.Describe(node, description);
-        foreach (var consumer in this._ListOutgoingConnection) {
-            node.AddOutgoing(consumer);
+        for (int i = 0; i < this._ListOutgoingConnection.Length; i++) {
+            IBCConnection<T>? consumer = this._ListOutgoingConnection[i];
+            node.AddOutgoing($"{this.Description.Name}{i}",consumer);
         }
     }
 }

@@ -1,0 +1,62 @@
+<f-flow fDraggable>
+  <f-canvas>
+    @for(visualConnection of $listVisualConnection(); track visualConnection.id){
+      <f-connection [fOutputId]="visualConnection.source.id" [fInputId]="visualConnection.sink.id"></f-connection>
+    }
+    @for (visualPart of $listVisualPart(); track visualPart.id) {
+    <div fNode fDragHandle fNodeInput
+      [fInputId]="visualPart.id"
+      fInputConnectableSide="left"
+      [fNodePosition]="visualPart.pos">
+      <div>
+        {{ visualPart.id }}
+      </div>
+      <div>
+        {{ visualPart.DescriptionNode.name }}
+      </div>
+      @for(connectionId of visualPart.DescriptionNode.outgoing; track connectionId){
+        <div>
+          Out: {{connectionId}}
+        </div>
+      }
+      @for(connection of visualPart.listOutgoing; track connection.id){
+        <div
+          fNode
+          fNodeOutput
+          fOutputId="connection.sink.id"
+          fOutputConnectableSide="right"
+        >
+          Out: {{connection}}
+        </div>
+      }
+    </div>
+    }
+
+    <!--
+    
+    <f-connection fOutputId="output1" fInputId="input1"></f-connection>
+
+    <div
+      fNode
+      fDragHandle
+      fNodeOutput
+      [fNodePosition]="{ x: 32, y: 32 }"
+      fOutputId="output1"
+      fOutputConnectableSide="right"
+    >
+      Node 1
+    </div>
+
+    <div
+      fNode
+      fDragHandle
+      fNodeInput
+      [fNodePosition]="{ x: 240, y: 32 }"
+      fInputId="input1"
+      fInputConnectableSide="left"
+    >
+      Node 2
+    </div>
+-->
+  </f-canvas>
+</f-flow>

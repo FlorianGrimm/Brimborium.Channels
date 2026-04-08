@@ -38,8 +38,8 @@ public class BCBlockI1O1<TIn1, TOut1> : BCBlock {
 
     public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
         base.Describe(node, description);
-        node.AddIncoming(this.IncomingConsumer1);
-        node.AddOutgoing(this.OutgoingProducer1);
+        node.AddIncoming("In1", this.IncomingConsumer1);
+        node.AddOutgoing("Out1", this.OutgoingProducer1);
     }
 }
 
@@ -97,9 +97,9 @@ public class BCBlockI2O1<TIn1, TIn2, TOut1> : BCBlock {
 
     public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
         base.Describe(node, description);
-        node.AddIncoming(this.IncomingConsumer1);
-        node.AddIncoming(this.IncomingConsumer2);
-        node.AddOutgoing(this.OutgoingProducer1);
+        node.AddIncoming("In1", this.IncomingConsumer1);
+        node.AddIncoming("In2", this.IncomingConsumer2);
+        node.AddOutgoing("Out1", this.OutgoingProducer1);
     }
 }
 
@@ -164,10 +164,10 @@ public class BCBlockI3O1<TIn1, TIn2, TIn3, TOut1> : BCBlock {
 
     public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
         base.Describe(node, description);
-        node.AddIncoming(this.IncomingConsumer1);
-        node.AddIncoming(this.IncomingConsumer2);
-        node.AddIncoming(this.IncomingConsumer3);
-        node.AddOutgoing(this.OutgoingProducer1);
+        node.AddIncoming("In1", this.IncomingConsumer1);
+        node.AddIncoming("In2", this.IncomingConsumer2);
+        node.AddIncoming("In3", this.IncomingConsumer3);
+        node.AddOutgoing("Out1", this.OutgoingProducer1);
     }
 }
 
@@ -226,9 +226,9 @@ public class BCBlockI1O2<TIn1, TOut1, TOut2> : BCBlock {
 
     public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
         base.Describe(node, description);
-        node.AddIncoming(this.IncomingConsumer1);
-        node.AddOutgoing(this.OutgoingProducer1);
-        node.AddOutgoing(this.OutgoingProducer2);
+        node.AddIncoming("In1", this.IncomingConsumer1);
+        node.AddOutgoing("Out1", this.OutgoingProducer1);
+        node.AddOutgoing("Out2", this.OutgoingProducer2);
     }
 }
 
@@ -296,10 +296,10 @@ public class BCBlockI2O2<TIn1, TIn2, TOut1, TOut2> : BCBlock {
 
     public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
         base.Describe(node, description);
-        node.AddIncoming(this.IncomingConsumer1);
-        node.AddIncoming(this.IncomingConsumer2);
-        node.AddOutgoing(this.OutgoingProducer1);
-        node.AddOutgoing(this.OutgoingProducer2);
+        node.AddIncoming("In1", this.IncomingConsumer1);
+        node.AddIncoming("In2", this.IncomingConsumer2);
+        node.AddOutgoing("Out1", this.OutgoingProducer1);
+        node.AddOutgoing("Out2", this.OutgoingProducer2);
     }
 }
 
@@ -372,11 +372,11 @@ public class BCBlockI3O2<TIn1, TIn2, TIn3, TOut1, TOut2> : BCBlock {
 
     public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
         base.Describe(node, description);
-        node.AddIncoming(this.IncomingConsumer1);
-        node.AddIncoming(this.IncomingConsumer2);
-        node.AddIncoming(this.IncomingConsumer3);
-        node.AddOutgoing(this.OutgoingProducer1);
-        node.AddOutgoing(this.OutgoingProducer2);
+        node.AddIncoming("In1", this.IncomingConsumer1);
+        node.AddIncoming("In2", this.IncomingConsumer2);
+        node.AddIncoming("In3", this.IncomingConsumer3);
+        node.AddOutgoing("Out1", this.OutgoingProducer1);
+        node.AddOutgoing("Out2", this.OutgoingProducer2);
     }
 }
 
@@ -446,10 +446,10 @@ public class BCBlockI1O3<TIn1, TOut1, TOut2, TOut3> : BCBlock {
 
     public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
         base.Describe(node, description);
-        node.AddIncoming(this.IncomingConsumer1);
-        node.AddOutgoing(this.OutgoingProducer1);
-        node.AddOutgoing(this.OutgoingProducer2);
-        node.AddOutgoing(this.OutgoingProducer3);
+        node.AddIncoming("In1", this.IncomingConsumer1);
+        node.AddOutgoing("Out1", this.OutgoingProducer1);
+        node.AddOutgoing("Out2", this.OutgoingProducer2);
+        node.AddOutgoing("Out3", this.OutgoingProducer3);
     }
 }
 
@@ -525,11 +525,11 @@ public class BCBlockI2O3<TIn1, TIn2, TOut1, TOut2, TOut3> : BCBlock {
 
     public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
         base.Describe(node, description);
-        node.AddIncoming(this.IncomingConsumer1);
-        node.AddIncoming(this.IncomingConsumer2);
-        node.AddOutgoing(this.OutgoingProducer1);
-        node.AddOutgoing(this.OutgoingProducer2);
-        node.AddOutgoing(this.OutgoingProducer3);
+        node.AddIncoming("In1", this.IncomingConsumer1);
+        node.AddIncoming("In2", this.IncomingConsumer2);
+        node.AddOutgoing("Out1", this.OutgoingProducer1);
+        node.AddOutgoing("Out2", this.OutgoingProducer2);
+        node.AddOutgoing("Out3", this.OutgoingProducer3);
     }
 }
 
@@ -610,12 +610,12 @@ public class BCBlockI3O3<TIn1, TIn2, TIn3, TOut1, TOut2, TOut3> : BCBlock {
 
     public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
         base.Describe(node, description);
-        node.AddIncoming(this.IncomingConsumer1);
-        node.AddIncoming(this.IncomingConsumer2);
-        node.AddIncoming(this.IncomingConsumer3);
-        node.AddOutgoing(this.OutgoingProducer1);
-        node.AddOutgoing(this.OutgoingProducer2);
-        node.AddOutgoing(this.OutgoingProducer3);
+        node.AddIncoming("In1", this.IncomingConsumer1);
+        node.AddIncoming("In2", this.IncomingConsumer2);
+        node.AddIncoming("In3", this.IncomingConsumer3);
+        node.AddOutgoing("Out1", this.OutgoingProducer1);
+        node.AddOutgoing("Out2", this.OutgoingProducer2);
+        node.AddOutgoing("Out3", this.OutgoingProducer3);
     }
 }
 

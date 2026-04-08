@@ -1,12 +1,13 @@
 ﻿namespace Brimborium.Channels;
 
-public class BCDescriptionNode {
+[Tapper.TranspilationSource]
+public sealed class BCDescriptionNode {
 
     public string Kind { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Parent { get; set; } = string.Empty;
-    public List<string>? Incoming { get; set; }
-    public List<string>? Outgoing { get; set; }
+    public List<BCPortNode>? Incoming { get; set; }
+    public List<BCPortNode>? Outgoing { get; set; }
     public string NodeId { get => this._NodeId ?? string.Empty; set => this._NodeId = value; }
 
     private string? _NodeId;
@@ -21,30 +22,22 @@ public class BCDescriptionNode {
         }
     }
 
-    public void AddIncoming(IBCPart part) {
+    public void AddIncoming(string port, IBCPart part) {
         if ((part is IBCMonitored monitored)
             && (monitored.GetNodeId() is string nodeId)) {
-            (this.Incoming ??= new()).Add(nodeId);
+            (this.Incoming ??= new()).Add(new() { PortId = port, NodeId = nodeId });
         }
     }
 
-    public void AddOutgoing(IBCPart part) {
+    public void AddOutgoing(string port, IBCPart part) {
         if ((part is IBCMonitored monitored)
             && (monitored.GetNodeId() is string nodeId)) {
-            (this.Outgoing ??= new()).Add(nodeId);
+            (this.Outgoing ??= new()).Add(new() { PortId=port, NodeId=nodeId });
         }
     }
 }
-
-public sealed class BCDescriptionGraph {
-    public Dictionary<string, BCDescriptionNode> Nodes { get; } = new();
-
-    public void SetParent(IBCPart child, BCDescriptionNode parent) {
-        if (child is IBCMonitored childMonitored
-            && childMonitored.GetNodeId() is { }  childNodeId) {
-            if (this.Nodes.TryGetValue(childNodeId, out var childNode)) {
-                childNode.Parent = parent.NodeId;
-            }
-        }
-    }
+[Tapper.TranspilationSource]
+public sealed class BCPortNode {
+    public required string PortId { get; set; }
+    public required string NodeId { get; set; }
 }

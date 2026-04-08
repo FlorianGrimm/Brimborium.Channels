@@ -68,7 +68,7 @@ public sealed class BCConnection<T>
         using (this._Monitor?.LogEnter(this, nameof(this.OnError))) {
             await this._Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try {
-            await this.RightIncomingConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
+                await this.RightIncomingConsumer.OnError(value, cancellationToken).ConfigureAwait(false);
             } finally {
                 this._Semaphore.Release();
             }
@@ -115,7 +115,7 @@ public sealed class BCConnection<T>
     public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
         node.Kind = "Connection";
         node.Name = this.Description.Name;
-        node.AddIncoming(this.LeftOutgoingProducer);
-        node.AddOutgoing(this.RightIncomingConsumer);
+        node.AddIncoming("Left", this.LeftOutgoingProducer);
+        node.AddOutgoing("Right", this.RightIncomingConsumer);
     }
 }

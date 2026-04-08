@@ -2,7 +2,6 @@
 
 namespace Brimborium.Channels;
 
-
 public interface IBCMonitor {
     void AddMonitored(IBCMonitored monitored);
     void Log(IBCPart part, string name, string kind);
@@ -10,7 +9,7 @@ public interface IBCMonitor {
 }
 
 /// <summary>Immutable log record produced by <see cref="IBCMonitor"/> for a single named event.</summary>
-public sealed record BCLogItem(
+public record struct BCLogItem(
     DateTime Timestamp,
     IBCPart Part, string Name, string Kind
     ) {
@@ -22,6 +21,12 @@ public sealed record BCLogItem(
         ) {
     }
 }
+
+[Tapper.TranspilationSource]
+public record struct BCLogRecord(
+    DateTime Timestamp,
+    string NodeId, string Name, string Kind
+    );
 
 /// <summary>
 /// Disposable scope returned by <see cref="IBCMonitor.LogEnter"/>.

@@ -83,8 +83,8 @@ public abstract class BCProcessorTrackingO2<TIn1, TIn1Transformed, TOut1, TOut2,
             if (this.SetCompleting()) {
                 if (this.SetCompleted()) {
                     if (this.TrackingManager.OnComplete()) {
-                        // await this.TrackingConsumer.OnComplete(tracking??, cancellationToken);
                         await this.NextConsumer1.OnComplete(cancellationToken);
+                        await this.NextConsumer2.OnComplete(cancellationToken);
                     }
                 }
             }
@@ -106,12 +106,16 @@ public abstract class BCProcessorTrackingO2<TIn1, TIn1Transformed, TOut1, TOut2,
         var result = base.SetMonitor(monitor);
         if (result) {
             monitor.Add(this.NextConsumer1);
+            monitor.Add(this.NextConsumer2);
+            monitor.Add(this.TrackingManager);
         }
         return true;
     }
 
     public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
         base.Describe(node, description);
-        node.AddOutgoing(this.NextConsumer1);
+        node.AddOutgoing("Next1", this.NextConsumer1);
+        node.AddOutgoing("TrackingManager", this.TrackingManager);
+        node.AddOutgoing("Next2", this.NextConsumer2);
     }
 }

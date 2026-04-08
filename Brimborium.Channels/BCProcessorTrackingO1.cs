@@ -108,12 +108,14 @@ public abstract class BCProcessorTrackingO1<TIn1, TIn1Transformed, TOut1, TBCTra
         var result = base.SetMonitor(monitor);
         if (result) {
             monitor.Add(this.NextConsumer1);
+            monitor.Add(this.TrackingManager);
         }
         return true;
     }
 
     public override void Describe(BCDescriptionNode node, BCDescriptionGraph description) {
         base.Describe(node, description);
-        node.AddOutgoing(this.NextConsumer1);
+        node.AddOutgoing("Next1", this.NextConsumer1);
+        node.AddOutgoing("TrackingManager", this.TrackingManager);
     }
 }
